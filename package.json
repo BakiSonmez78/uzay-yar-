@@ -1,0 +1,70 @@
+{
+  "name": "matematik-uzay-yarisi",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "desktop/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "electron:dev": "concurrently -k \"cross-env BROWSER=none npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron:build": "npm run build && electron-builder"
+  },
+  "build": {
+    "appId": "com.mathheroes.game",
+    "productName": "Matematik Uzay Yarışı",
+    "directories": {
+      "output": "dist_electron"
+    },
+    "files": [
+      "dist/**/*",
+      "desktop/**/*",
+      "server/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "server",
+        "to": "server",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.4",
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^7.4.4",
+    "canvas-confetti": "^1.9.4",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "firebase": "^12.6.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "request-ip": "^3.3.0",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^39.2.5",
+    "electron-builder": "^26.0.12",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "vconsole": "^3.15.1",
+    "vite": "^7.2.4",
+    "wait-on": "^9.0.3"
+  }
+}

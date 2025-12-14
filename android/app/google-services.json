@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "465831207808",
+    "project_id": "math-games-6c136",
+    "storage_bucket": "math-games-6c136.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:465831207808:android:3a1be8e66d949df44b9765",
+        "android_client_info": {
+          "package_name": "com.mathheroes.game"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCgeKm8SSpVsCnqTyrQKEUgaWvXlVJ3Wk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
