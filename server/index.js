@@ -44,6 +44,8 @@ const queues = {
     '/': [],
     'mixed': []
 };
+const tournaments = {}; // { tournamentId: { id, size, players: [], status: 'waiting'|'in_progress'|'finished', bracket: [], winner: null } }
+
 
 // Generate questions for a game
 const generateQuestions = (mode) => {
@@ -207,6 +209,19 @@ const handleAnswer = (roomId, playerId, questionIndex, answer) => {
         console.warn(`[handleAnswer] Stale answer. Game Index: ${game.currentIndex}, Msg Index: ${questionIndex}`);
         return; // Question already solved by someone else
     }
+
+    // Initialize attempted tracking if not exists
+    if (!game.attempted) game.attempted = {};
+    if (!game.attempted[questionIndex]) game.attempted[questionIndex] = [];
+
+    // Check if player already attempted this question
+    if (game.attempted[questionIndex].includes(playerId)) {
+        console.warn(`[handleAnswer] Player ${playerId} already attempted question ${questionIndex}`);
+        return; // Player already tried this question
+    }
+
+    // Mark as attempted
+    game.attempted[questionIndex].push(playerId);
 
     const q = game.questions[questionIndex];
     if (q.answer === answer) {
@@ -456,6 +471,118 @@ io.on('connection', (socket) => {
                 delete games[roomId];
             }
         });
+    });
+
+    // ========== TOURNAMENT HANDLERS ==========
+    socket.on('get_tournaments', () => {
+        const activeTournaments = Object.values(tournaments).filter(t => t.status !== 'finished');
+        socket.emit('tournaments_list', activeTournaments);
+    });
+
+    socket.on('create_tournament', ({ size, creator }) => {
+        const tournamentId = `tournament_${Date.now()}`;
+        const tournament = {
+            id: tournamentId,
+            size,
+            creator,
+            players: [creator],
+            status: 'waiting',
+            bracket: [],
+            createdAt: Date.now()
+        };
+
+        tournaments[tournamentId] = tournament;
+        io.emit('tournaments_list', Object.values(tournaments).filter(t => t.status !== 'finished'));
+        socket.emit('tournament_created', tournament);
+        console.log(`Tournament created: ${tournamentId} (${size} players)`);
+    });
+
+    socket.on('join_tournament', ({ tournamentId, player }) => {
+        const tournament = tournaments[tournamentId];
+
+        if (!tournament) {
+            socket.emit('error', { message: 'Turnuva bulunamadı' });
+            return;
+        }
+
+        if (tournament.status !== 'waiting') {
+            socket.emit('error', { message: 'Turnuva zaten başladı' });
+            return;
+        }
+
+        if (tournament.players.length >= tournament.size) {
+            socket.emit('error', { message: 'Turnuva dolu' });
+            return;
+        }
+
+        if (tournament.players.some(p => p.uid === player.uid)) {
+            socket.emit('error', { message: 'Zaten katıldınız' });
+            return;
+        }
+
+        tournament.players.push(player);
+        io.emit('tournaments_list', Object.values(tournaments).filter(t => t.status !== 'finished'));
+        socket.emit('tournament_joined', tournament);
+
+        // Start tournament if full
+        if (tournament.players.length === tournament.size) {
+            tournament.status = 'in_progress';
+            io.emit('tournament_started', tournamentId);
+            console.log(`Tournament ${tournamentId} started with ${tournament.size} players`);
+            // TODO: Create bracket and start matches
+        }
+    });
+
+    // ========== AUTO TOURNAMENT QUEUE ==========
+    socket.on('join_tournament_queue', ({ size, player }) => {
+        console.log(`[Tournament] Player ${player.name} requesting ${size}-player tournament`);
+
+        let tournament = Object.values(tournaments).find(t => t.size === size && t.status === 'waiting');
+
+        if (!tournament) {
+            const tournamentId = `tour_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            tournament = {
+                id: tournamentId,
+                size: size,
+                players: [],
+                status: 'waiting',
+                bracket: [],
+                createdAt: Date.now()
+            };
+            tournaments[tournamentId] = tournament;
+            console.log(`[Tournament] Created new ${size}-player tournament: ${tournamentId}`);
+        }
+
+        const isAlreadyIn = tournament.players.some(p => p.uid === player.uid);
+        if (!isAlreadyIn) {
+            tournament.players.push(player);
+            socket.join(tournament.id);
+        }
+
+        io.to(tournament.id).emit('tournament_update', tournament);
+        socket.emit('tournament_joined_success', tournament);
+
+        console.log(`[Tournament] ${tournament.id} - Players: ${tournament.players.length}/${tournament.size}`);
+
+        if (tournament.players.length >= tournament.size) {
+            tournament.status = 'in_progress';
+            io.to(tournament.id).emit('tournament_started', tournament);
+            console.log(`[Tournament] ${tournament.id} STARTED!`);
+        }
+    });
+
+    socket.on('leave_tournament', ({ tournamentId, playerId }) => {
+        const tournament = tournaments[tournamentId];
+        if (tournament && tournament.status === 'waiting') {
+            tournament.players = tournament.players.filter(p => p.uid !== playerId);
+            socket.leave(tournamentId);
+
+            io.to(tournamentId).emit('tournament_update', tournament);
+
+            if (tournament.players.length === 0) {
+                delete tournaments[tournamentId];
+            }
+        }
     });
 });
 
