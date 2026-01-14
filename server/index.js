@@ -584,6 +584,79 @@ io.on('connection', (socket) => {
             }
         }
     });
+
+    // ========== APPROVAL-BASED TOURNAMENT ==========
+    socket.on('create_tournament', ({ size, creator }) => {
+        const tournamentId = `tour_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const tournament = {
+            id: tournamentId,
+            size: size,
+            creator: creator,
+            players: [creator],
+            pendingRequests: [],
+            status: 'waiting',
+            bracket: [],
+            createdAt: Date.now()
+        };
+
+        tournaments[tournamentId] = tournament;
+        socket.join(tournamentId);
+
+        socket.emit('tournament_created', tournament);
+        io.emit('tournament_list_update', Object.values(tournaments).filter(t => t.status === 'waiting'));
+
+        console.log(`[Tournament] Created: ${tournamentId} by ${creator.name}`);
+    });
+
+    socket.on('get_tournaments', () => {
+        const availableTournaments = Object.values(tournaments).filter(t => t.status === 'waiting');
+        socket.emit('tournament_list_update', availableTournaments);
+    });
+
+    socket.on('request_join_tournament', ({ tournamentId, player }) => {
+        const tournament = tournaments[tournamentId];
+
+        if (!tournament || tournament.status !== 'waiting') return;
+        if (tournament.players.some(p => p.uid === player.uid)) return;
+        if (tournament.pendingRequests.some(r => r.player.uid === player.uid)) return;
+
+        tournament.pendingRequests.push({ player: player, requestedAt: Date.now() });
+        socket.emit('join_request_sent', { tournamentId });
+        io.to(tournamentId).emit('tournament_update', tournament);
+
+        console.log(`[Tournament] ${player.name} requested to join ${tournamentId}`);
+    });
+
+    socket.on('approve_join_request', ({ tournamentId, playerUid }) => {
+        const tournament = tournaments[tournamentId];
+        if (!tournament) return;
+
+        const requestIndex = tournament.pendingRequests.findIndex(r => r.player.uid === playerUid);
+        if (requestIndex === -1) return;
+
+        const request = tournament.pendingRequests[requestIndex];
+        tournament.players.push(request.player);
+        tournament.pendingRequests.splice(requestIndex, 1);
+
+        io.to(tournamentId).emit('tournament_update', tournament);
+
+        if (tournament.players.length >= tournament.size) {
+            tournament.status = 'in_progress';
+            io.to(tournamentId).emit('tournament_started', tournament);
+            console.log(`[Tournament] ${tournamentId} STARTED!`);
+        }
+    });
+
+    socket.on('reject_join_request', ({ tournamentId, playerUid }) => {
+        const tournament = tournaments[tournamentId];
+        if (!tournament) return;
+
+        const requestIndex = tournament.pendingRequests.findIndex(r => r.player.uid === playerUid);
+        if (requestIndex !== -1) {
+            tournament.pendingRequests.splice(requestIndex, 1);
+            io.to(tournamentId).emit('tournament_update', tournament);
+        }
+    });
 });
 
 const PORT = process.env.PORT || 3001;
