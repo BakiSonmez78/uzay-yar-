@@ -2,12 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { soundManager } from './utils/soundManager';
 import Welcome from './components/Welcome';
+import Login from './components/Login';
 import Menu from './components/Menu';
 import Lobby from './components/Lobby';
 import Game from './components/Game';
 import Results from './components/Results';
 import Matchmaking from './components/Matchmaking';
 import Leaderboard from './components/Leaderboard';
+import Tournament from './components/Tournament';
 import VConsole from 'vconsole';
 
 // Init vConsole for mobile debugging
@@ -23,8 +25,8 @@ const getApiUrl = () => {
   // Auto-detected local IP
   // return 'http://192.168.1.59:3001';
 
-  // Temporary Tunnel (HTTPS) for Firebase Connectivity
-  return 'https://vacanto-math-game.loca.lt';
+  // Production Backend (Render)
+  return 'https://uzay-yarisi-backend.onrender.com';
 };
 
 // Initialize socket lazily
@@ -42,8 +44,9 @@ const getSocket = () => {
 };
 
 function App() {
-  const [gameState, setGameState] = useState('welcome'); // welcome, menu, lobby, matchmaking, playing, results
-  const [userData, setUserData] = useState({ name: '', avatar: '' });
+  const [gameState, setGameState] = useState('welcome'); // welcome, login, menu, lobby, matchmaking, playing, results
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userData, setUserData] = useState({ name: '', avatar: '', uid: '', isGuest: false });
   const [gameMode, setGameMode] = useState(null);
   const [gameData, setGameData] = useState(null); // { roomId, questions, opponent, ... }
   const [finalScore, setFinalScore] = useState(0);
@@ -110,13 +113,9 @@ function App() {
     };
   }, []);
 
-  const handleEnterGame = () => {
-    console.log("App: handleEnterGame called. Switching to 'menu'");
-    setGameState('menu');
-  };
-
   const handleStart = (name, avatar) => {
-    setUserData({ name, avatar });
+    // Keep user data from login, just update if needed
+    setUserData(prev => ({ ...prev, name: name || prev.name, avatar: avatar || prev.avatar }));
     setGameState('lobby');
   };
 
@@ -124,11 +123,19 @@ function App() {
     setGameState('leaderboard');
   };
 
+  const handleShowTournament = () => {
+    setGameState('tournament');
+  };
+
   const handleBackFromLeaderboard = () => {
     setGameState('menu');
   };
 
-  const handleSelectMode = (mode, matchType) => {
+  const handleBackFromTournament = () => {
+    setGameState('menu');
+  };
+
+  const handleSelectMode = (mode, matchType, botDifficulty = 'medium') => {
     setGameMode(mode);
     setGameState('matchmaking');
     getSocket().emit('join_queue', {
@@ -136,6 +143,7 @@ function App() {
       avatar: userData.avatar,
       mode,
       matchType,
+      botDifficulty,
       playerId: playerIdRef.current // Send Stable ID
     });
   };
@@ -176,6 +184,18 @@ function App() {
     setGameState('results');
   };
 
+  const handleEnterGame = () => {
+    console.log("App: handleEnterGame called. Switching to 'login'");
+    setGameState('login');
+  };
+
+  const handleLoginSuccess = (user) => {
+    console.log("App: Login successful", user);
+    setUserData(user);
+    setIsAuthenticated(true);
+    setGameState('menu');
+  };
+
   const handleRestart = () => {
     if (gameState === 'matchmaking') {
       getSocket().emit('leave_queue');
@@ -189,12 +209,25 @@ function App() {
   return (
     <div className="app-container">
       {gameState === 'welcome' && <Welcome onStart={handleEnterGame} />}
-      {gameState === 'menu' && <Menu onStart={handleStart} onShowLeaderboard={handleShowLeaderboard} totalScore={userTotalScore} />}
+      {gameState === 'login' && <Login onLoginSuccess={handleLoginSuccess} />}
+      {gameState === 'menu' && <Menu userData={userData} onStart={handleStart} onShowLeaderboard={handleShowLeaderboard} onShowTournament={handleShowTournament} totalScore={userTotalScore} />}
 
       {gameState === 'leaderboard' && (
         <Leaderboard
           socket={getSocket()}
           onBack={handleBackFromLeaderboard}
+        />
+      )}
+
+      {gameState === 'tournament' && (
+        <Tournament
+          socket={getSocket()}
+          userData={userData}
+          onBack={handleBackFromTournament}
+          onStartMatch={(gameData) => {
+            setGameData(gameData);
+            setGameState('playing');
+          }}
         />
       )}
 

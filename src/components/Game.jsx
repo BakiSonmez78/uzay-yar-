@@ -153,7 +153,33 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
     if (!currentQuestion) return <div>Yükleniyor...</div>;
 
     return (
-        <div className="card fade-in" style={{ maxWidth: '900px' }}>
+        <div className="card fade-in" style={{ maxWidth: '900px', position: 'relative' }}>
+            {/* Quit Button - Top Right */}
+            <button
+                onClick={() => {
+                    if (confirm('Oyunu terk etmek istediğinize emin misiniz?')) {
+                        window.location.reload();
+                    }
+                }}
+                style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem',
+                    padding: '0.5rem 1rem',
+                    background: 'rgba(239, 68, 68, 0.2)',
+                    border: '1px solid rgba(239, 68, 68, 0.5)',
+                    borderRadius: '8px',
+                    color: '#ef4444',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: 'bold',
+                    zIndex: 10
+                }}
+                title="Oyunu Terk Et"
+            >
+                ❌ Çık
+            </button>
+
             {/* Header with Scores */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '2rem', marginBottom: '2rem', alignItems: 'center' }}>
 
@@ -162,7 +188,14 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
                     <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>
                         {/* {getFlagEmoji(myCountry || 'TR')} */} {myName} (SEN)
                     </div>
-                    <div className="score-box" style={{ fontSize: '2.5rem', color: '#60a5fa' }}>
+                    <div className="score-box" style={{
+                        fontSize: '2.5rem',
+                        color: '#60a5fa',
+                        maxWidth: '120px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                    }}>
                         {score}
                     </div>
                     {/* Streak Indicator */}
@@ -185,26 +218,18 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
                     <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>
                         {opponent ? opponent.name : 'Rakip Bekleniyor...'} {/* {opponent && getFlagEmoji(opponent.country || 'TR')} */}
                     </div>
-                    <div className="score-box" style={{ fontSize: '2.5rem', color: '#f87171' }}>
+                    <div className="score-box" style={{
+                        fontSize: '2.5rem',
+                        color: '#f87171',
+                        maxWidth: '120px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                    }}>
                         {localOpponentScore}
                     </div>
                 </div>
 
-            </div>{/* Progress Bars */}
-            <div style={{ position: 'relative', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', marginBottom: '2rem' }}>
-                {/* Player Progress */}
-                <div style={{
-                    position: 'absolute', top: 0, left: 0, height: '100%',
-                    width: `${(score / (questions.length * 10)) * 100}% `,
-                    background: 'var(--accent-primary)', borderRadius: '3px', transition: 'width 0.3s'
-                }} />
-                {/* Opponent Progress */}
-                <div style={{
-                    position: 'absolute', top: 0, left: 0, height: '100%',
-                    width: `${(localOpponentScore / (questions.length * 10)) * 100}% `,
-                    background: 'var(--accent-secondary)', borderRadius: '3px', transition: 'width 0.3s',
-                    opacity: 0.5
-                }} />
             </div>
 
             {/* Question */}

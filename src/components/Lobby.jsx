@@ -3,6 +3,7 @@ import { soundManager } from '../utils/soundManager';
 
 export default function Lobby({ name, avatar, onSelectMode }) {
     const [opponentType, setOpponentType] = React.useState('human'); // 'human' or 'bot'
+    const [botDifficulty, setBotDifficulty] = React.useState('medium'); // 'easy', 'medium', 'hard'
     const [, forceUpdate] = React.useState(0); // For re-rendering when sound settings change
 
     const modes = [
@@ -66,10 +67,40 @@ export default function Lobby({ name, avatar, onSelectMode }) {
                         onClick={() => setOpponentType('bot')}
                         style={{ flex: 1 }}
                     >
-                        🤖 Robot
+                        💻 Bilgisayar
                     </button>
                 </div>
             </div>
+
+            {/* Bot Difficulty Selection */}
+            {opponentType === 'bot' && (
+                <div style={{ marginBottom: '2rem' }}>
+                    <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>Zorluk Seviyesi:</p>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                        <button
+                            className={botDifficulty === 'easy' ? 'primary' : 'secondary'}
+                            onClick={() => setBotDifficulty('easy')}
+                            style={{ flex: 1, fontSize: '0.9rem' }}
+                        >
+                            😊 Kolay
+                        </button>
+                        <button
+                            className={botDifficulty === 'medium' ? 'primary' : 'secondary'}
+                            onClick={() => setBotDifficulty('medium')}
+                            style={{ flex: 1, fontSize: '0.9rem' }}
+                        >
+                            😐 Orta
+                        </button>
+                        <button
+                            className={botDifficulty === 'hard' ? 'primary' : 'secondary'}
+                            onClick={() => setBotDifficulty('hard')}
+                            style={{ flex: 1, fontSize: '0.9rem' }}
+                        >
+                            😈 Zor
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <p style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>
                 Hangi işlemde yarışmak istersin?
@@ -79,7 +110,7 @@ export default function Lobby({ name, avatar, onSelectMode }) {
                 {modes.map(mode => (
                     <button
                         key={mode.id}
-                        onClick={() => onSelectMode(mode.id, opponentType)}
+                        onClick={() => onSelectMode(mode.id, opponentType, botDifficulty)}
                         className="secondary"
                         style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}
                     >
@@ -88,6 +119,24 @@ export default function Lobby({ name, avatar, onSelectMode }) {
                     </button>
                 ))}
             </div>
+
+            {/* Back Button */}
+            <button
+                onClick={() => window.location.reload()}
+                className="secondary"
+                style={{
+                    marginTop: '2rem',
+                    width: '100%',
+                    padding: '1rem',
+                    background: 'rgba(255,255,255,0.1)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: '10px',
+                    color: 'white',
+                    cursor: 'pointer'
+                }}
+            >
+                ← Geri Dön
+            </button>
         </div>
     );
 }

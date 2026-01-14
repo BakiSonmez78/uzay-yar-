@@ -157,17 +157,26 @@ const startGame = (roomId, mode, players, isBotGame = false) => {
     }
 };
 
-const startBotLoop = (roomId) => {
+const startBotLoop = (roomId, difficulty = 'medium') => {
     const game = games[roomId];
     if (!game) return;
+
+    // Difficulty settings
+    const difficultySettings = {
+        easy: { minTime: 4000, maxTime: 7000, accuracy: 0.60 },
+        medium: { minTime: 2500, maxTime: 5000, accuracy: 0.75 },
+        hard: { minTime: 1000, maxTime: 3000, accuracy: 0.90 }
+    };
+
+    const settings = difficultySettings[difficulty] || difficultySettings.medium;
 
     // Recursive bot turn function
     const nextBotTurn = () => {
         const currentGame = games[roomId];
         if (!currentGame) return; // Game over
 
-        // Determine bot reaction time (2s to 5s)
-        const reactionTime = Math.random() * 3000 + 2000;
+        // Determine bot reaction time based on difficulty
+        const reactionTime = Math.random() * (settings.maxTime - settings.minTime) + settings.minTime;
 
         setTimeout(() => {
             const liveGame = games[roomId];
@@ -175,8 +184,7 @@ const startBotLoop = (roomId) => {
             if (!liveGame) return;
 
             // Bot attempts to solve CURRENT question
-            // Bot accuracy: 85%
-            const isCorrect = Math.random() < 0.85;
+            const isCorrect = Math.random() < settings.accuracy;
 
             if (isCorrect) {
                 // Simulate Bot "Clicking" Correct Answer
