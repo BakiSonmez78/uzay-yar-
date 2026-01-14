@@ -25,9 +25,11 @@ export default function Tournament({ socket, userData, onBack }) {
         });
 
         socket.on('tournament_update', (tournament) => {
-            if (currentTournament?.id === tournament.id) {
-                setCurrentTournament(tournament);
-            }
+            setCurrentTournament(tournament);
+            // Update available list too
+            setAvailableTournaments(prev =>
+                prev.map(t => t.id === tournament.id ? tournament : t)
+            );
         });
 
         socket.on('tournament_started', (tournament) => {

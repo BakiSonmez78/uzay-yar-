@@ -144,9 +144,32 @@ export default function Menu({ userData, onStart, onShowLeaderboard, onShowTourn
                         alignItems: 'center',
                         padding: '0 1rem',
                         fontSize: '1.2rem',
-                        fontWeight: 'bold'
+                        fontWeight: 'bold',
+                        position: 'relative',
+                        flex: 1
                     }}>
                         {name || 'İsim Yok'}
+                        <button
+                            onClick={() => {
+                                const newName = prompt('Yeni isminizi girin:', name);
+                                if (newName && newName.trim()) {
+                                    setName(newName.trim());
+                                }
+                            }}
+                            style={{
+                                position: 'absolute',
+                                right: '0.5rem',
+                                padding: '0.5rem',
+                                background: 'rgba(255,255,255,0.1)',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontSize: '1rem'
+                            }}
+                            title="İsmi Değiştir"
+                        >
+                            ✏️
+                        </button>
                     </div>
                 </div>
 
