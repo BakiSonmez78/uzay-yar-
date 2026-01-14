@@ -587,6 +587,16 @@ io.on('connection', (socket) => {
 
     // ========== APPROVAL-BASED TOURNAMENT ==========
     socket.on('create_tournament', ({ size, creator }) => {
+        // Check if creator already has an active tournament
+        const existingTournament = Object.values(tournaments).find(
+            t => t.status === 'waiting' && t.creator.uid === creator.uid
+        );
+
+        if (existingTournament) {
+            socket.emit('error', { message: 'Zaten aktif bir turnuvanız var' });
+            return;
+        }
+
         const tournamentId = `tour_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const tournament = {
             id: tournamentId,

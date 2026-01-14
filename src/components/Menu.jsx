@@ -6,9 +6,9 @@ import hedgehogImg from '../assets/hedgehog_pointing.png';
 
 // I'll do that first in a separate tool or just write the content to src/components/Menu.jsx assuming the image is there.
 
-export default function Menu({ onStart, onShowLeaderboard, totalScore = 0 }) {
-    const [name, setName] = useState('');
-    const [selectedAvatar, setSelectedAvatar] = useState('🐶');
+export default function Menu({ userData, onStart, onShowLeaderboard, onShowTournament, totalScore = 0 }) {
+    const [name, setName] = useState(userData?.name || '');
+    const [selectedAvatar, setSelectedAvatar] = useState(userData?.avatar || '🐶');
     const [showAvatars, setShowAvatars] = useState(false);
     const [, forceUpdate] = useState(0);
 
@@ -67,7 +67,7 @@ export default function Menu({ onStart, onShowLeaderboard, totalScore = 0 }) {
                 {/* Settings & Leaderboard */}
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <button onClick={onShowLeaderboard} className="icon-btn" title="Skor Tablosu">
-                        🏆
+                        📊
                     </button>
                     <button onClick={() => toggleAudio('music')} className="icon-btn" title="Müzik">
                         {soundManager.musicMuted ? '🔇' : '🎵'}
@@ -134,20 +134,20 @@ export default function Menu({ onStart, onShowLeaderboard, totalScore = 0 }) {
                         {selectedAvatar}
                     </div>
 
-                    <input
-                        type="text"
-                        placeholder="İsmin nedir?"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        maxLength={15}
-                        style={{
-                            margin: 0,
-                            background: 'rgba(0,0,0,0.3)',
-                            border: 'none',
-                            height: '50px',
-                            borderRadius: '15px'
-                        }}
-                    />
+                    <div style={{
+                        margin: 0,
+                        background: 'rgba(0,0,0,0.3)',
+                        border: 'none',
+                        height: '50px',
+                        borderRadius: '15px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '0 1rem',
+                        fontSize: '1.2rem',
+                        fontWeight: 'bold'
+                    }}>
+                        {name || 'İsim Yok'}
+                    </div>
                 </div>
 
                 {/* Avatar Slider (Expandable) */}
@@ -180,28 +180,46 @@ export default function Menu({ onStart, onShowLeaderboard, totalScore = 0 }) {
                     </div>
                 )}
 
-                {/* PLAY BUTTON */}
-                <button
-                    onClick={handleStart}
-                    disabled={!name.trim()}
-                    className="pulse-btn"
-                    style={{
-                        width: '100%',
-                        padding: '1.2rem',
-                        fontSize: '2rem',
-                        fontWeight: 'bold',
-                        background: 'linear-gradient(to bottom, #facc15, #ca8a04)', // Yellow/Gold
-                        border: 'none',
-                        borderRadius: '20px',
-                        color: '#422006',
-                        boxShadow: '0 4px 0 #a16207, 0 10px 20px rgba(0,0,0,0.3)',
-                        transform: 'translateY(0)',
-                        cursor: disabled => disabled ? 'not-allowed' : 'pointer',
-                        opacity: name.trim() ? 1 : 0.7
-                    }}
-                >
-                    OYNA ▶️
-                </button>
+
+                {/* GAME MODE BUTTONS */}
+                <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
+                    <button
+                        onClick={handleStart}
+                        className="pulse-btn"
+                        style={{
+                            flex: 1,
+                            padding: '1.2rem',
+                            fontSize: '1.5rem',
+                            fontWeight: 'bold',
+                            background: 'linear-gradient(to bottom, #3b82f6, #1d4ed8)',
+                            border: 'none',
+                            borderRadius: '20px',
+                            color: 'white',
+                            boxShadow: '0 4px 0 #1e40af, 0 10px 20px rgba(0,0,0,0.3)',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        🎮 Tek Oyun
+                    </button>
+
+                    <button
+                        onClick={onShowTournament}
+                        style={{
+                            flex: 1,
+                            padding: '1.2rem',
+                            fontSize: '1.5rem',
+                            fontWeight: 'bold',
+                            background: 'linear-gradient(to bottom, #facc15, #ca8a04)',
+                            border: 'none',
+                            borderRadius: '20px',
+                            color: '#422006',
+                            boxShadow: '0 4px 0 #a16207, 0 10px 20px rgba(0,0,0,0.3)',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        🏆 Turnuva
+                    </button>
+                </div>
             </div>
         </div>
     );
