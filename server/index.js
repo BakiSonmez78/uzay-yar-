@@ -647,6 +647,7 @@ io.on('connection', (socket) => {
         io.to(tournamentId).emit('tournament_update', tournament);
 
         console.log(`[Tournament] ${player.name} requested to join ${tournamentId}`);
+        console.log(`[Tournament] Emitted join_request_sent to player`);
     });
 
     socket.on('approve_join_request', ({ tournamentId, playerUid }) => {
