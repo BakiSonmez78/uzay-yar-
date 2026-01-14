@@ -639,6 +639,10 @@ io.on('connection', (socket) => {
         if (tournament.pendingRequests.some(r => r.player.uid === player.uid)) return;
 
         tournament.pendingRequests.push({ player: player, requestedAt: Date.now() });
+
+        // Join the tournament room to receive updates
+        socket.join(tournamentId);
+
         socket.emit('join_request_sent', { tournamentId });
         io.to(tournamentId).emit('tournament_update', tournament);
 
