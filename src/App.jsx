@@ -301,8 +301,15 @@ function App() {
         <Results
           score={finalScore}
           opponentScore={opponentScore}
-          onPlayAgain={() => setGameState('menu')}
+          onPlayAgain={() => {
+            if (gameData && gameData.isTournamentMatch) {
+              setGameState('tournament');
+            } else {
+              setGameState('menu');
+            }
+          }}
           outcomeOverride={gameResultOutcome}
+          isTournament={gameData?.isTournamentMatch}
         />
       )}
     </div>

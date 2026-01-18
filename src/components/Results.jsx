@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
 
-export default function Results({ score, opponentScore, opponentName, onRestart, onPlayAgain, outcomeOverride }) {
+export default function Results({ score, opponentScore, opponentName, onRestart, onPlayAgain, outcomeOverride, isTournament }) {
     const scoreNum = Number(score);
     const opponentScoreNum = Number(opponentScore);
 
@@ -108,8 +108,8 @@ export default function Results({ score, opponentScore, opponentName, onRestart,
                 </div>
             </div>
 
-            <button onClick={handleRestart} className="success" style={{ position: 'relative', zIndex: 1 }}>
-                Tekrar Oyna 🔄
+            <button onClick={handleRestart} className="success" style={{ position: 'relative', zIndex: 1, minWidth: '200px' }}>
+                {isTournament ? (isWinner ? 'Sıradaki Tura Geç ➡️' : 'Turnuva Tablosuna Dön 📋') : 'Ana Menüye Dön 🏠'}
             </button>
 
             <style>{`
