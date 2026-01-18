@@ -3,77 +3,56 @@ import { soundManager } from '../utils/soundManager';
 import introVideo from '../assets/intro.mp4';
 
 export default function Welcome({ onStart }) {
-  const [introStep, setIntroStep] = useState('logo'); // 'logo', 'video', 'menu'
-  const [, forceUpdate] = useState(0); // For re-rendering when sound settings change
-  const videoRef = useRef(null);
+  const [introStep, setIntroStep] = useState('logo');
+  const [, forceUpdate] = useState(0);
+
+  const finishIntro = () => {
+    try {
+      soundManager.stopBeachAmbience();
+    } catch (e) {
+      console.warn("Sound stop failed", e);
+    }
+    console.log("Welcome: Intro finished. Transitioning to login...");
+    if (onStart) onStart();
+  };
 
   // Sequence Timer
   useEffect(() => {
     // Start beach ambience when logo appears
-    soundManager.playBeachAmbience();
+    try {
+      soundManager.playBeachAmbience();
+    } catch (e) {
+      console.warn("Sound play failed", e);
+    }
 
-    // Logo Phase (6 seconds total)
+    // Logo Phase (3 seconds now, faster)
     const logoTimer = setTimeout(() => {
-      soundManager.stopBeachAmbience();
-      console.log("Welcome: Logo phase finished. Transitioning to login...");
-      if (onStart) onStart();
-    }, 6000);
+      finishIntro();
+    }, 3000);
 
     return () => {
       clearTimeout(logoTimer);
-      soundManager.stopBeachAmbience();
+      try { soundManager.stopBeachAmbience(); } catch (e) { }
     };
   }, [onStart]);
 
-  // Video Phase Logic
-  useEffect(() => {
-    if (introStep === 'video' && videoRef.current) {
-      // ... same video logic ...
-      const playPromise = videoRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(() => videoRef.current.muted = true);
-      }
-    }
-  }, [introStep]);
-
-  // ... (keep handlers same) ...
-
-  const handleVideoEnded = () => {
-    if (videoRef.current) {
-      videoRef.current.pause();
-    }
-    setIntroStep('menu');
-  };
-
-  const handleGameStart = () => {
-    console.log("Welcome: Maceraya Başla clicked");
-    try {
-      soundManager.playMusic();
-    } catch (e) {
-      console.error("Music play failed:", e);
-    }
-
-    if (onStart) {
-      console.log("Welcome: Calling onStart...");
-      onStart();
-    } else {
-      console.error("Welcome: onStart prop is missing!");
-    }
-  };
-
   return (
-    <div className="card fade-in" style={{
-      textAlign: 'center',
-      padding: '0',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '80vh',
-      position: 'relative',
-      overflow: 'hidden',
-      background: 'black'
-    }}>
+    <div
+      className="card fade-in"
+      onClick={finishIntro} // Click to skip
+      style={{
+        textAlign: 'center',
+        padding: '0',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '80vh',
+        position: 'relative',
+        overflow: 'hidden',
+        background: 'black',
+        cursor: 'pointer' // Show it's clickable
+      }}>
 
       {/* 1. YAZ GAMES LOGO OVERLAY */}
       <div style={{
@@ -85,12 +64,11 @@ export default function Welcome({ onStart }) {
         background: 'black',
         zIndex: 10,
         display: 'flex',
-        flexDirection: 'column', // Stack vertically
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        opacity: introStep === 'logo' ? 1 : 0,
+        opacity: 1,
         pointerEvents: 'none',
-        transition: 'opacity 1s ease-in-out'
       }}>
         {/* Animated Text */}
         <h1 style={{
@@ -98,7 +76,8 @@ export default function Welcome({ onStart }) {
           fontWeight: '900',
           marginBottom: '2rem',
           letterSpacing: '5px',
-          animation: 'glow-settle 3s ease-out forwards' // Glow then settle
+          animation: 'glow-settle 3s ease-out forwards',
+          color: 'white'
         }}>
           YAZ GAMES
         </h1>
@@ -112,9 +91,8 @@ export default function Welcome({ onStart }) {
           overflow: 'hidden',
           background: 'linear-gradient(to bottom, #60a5fa 55%, #fcd34d 55%)', // Sea and Sand
           boxShadow: '0 0 30px rgba(252, 211, 77, 0.3)', // Sunlight glow
-          opacity: 0,
           animation: 'pop-in 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
-          animationDelay: '1.5s' // Appear after text starts settling
+          animationDelay: '0.5s'
         }}>
           {/* Sea Shine */}
           <div style={{
@@ -128,117 +106,25 @@ export default function Welcome({ onStart }) {
             bottom: '30px',
             left: '50px',
             fontSize: '3rem',
-            opacity: 0,
             animation: 'pop-in 0.8s ease-out forwards',
-            animationDelay: '2.5s'
+            animationDelay: '1s'
           }}>
             🪑
           </div>
 
-          {/* Beach Umbrella - rotated to stand upright */}
+          {/* Beach Umbrella */}
           <div style={{
             position: 'absolute',
             bottom: '40px',
             left: '85px',
             fontSize: '4rem',
-            opacity: 0,
             animation: 'pop-in 0.8s ease-out forwards',
-            animationDelay: '3.2s',
-            transform: 'scaleX(-1)' // Mirror to face correct direction
+            animationDelay: '1.2s',
+            transform: 'scaleX(-1)' // Mirror
           }}>
             ⛱️
           </div>
         </div>
-      </div>
-
-      {/* 2. BACKGROUND VIDEO */}
-      <video
-        ref={videoRef}
-        playsInline
-        onEnded={handleVideoEnded} // Trigger menu when video finishes
-        onClick={handleVideoEnded} // Also trigger menu on click (Skip)
-        muted // Default to muted
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain', // Fit screen, do not crop
-          opacity: introStep === 'video' ? 1 : 0, // Only visible during video step
-          transition: 'opacity 0.5s ease',
-          zIndex: 0,
-          cursor: introStep === 'video' ? 'pointer' : 'default' // Indicate clickable
-        }}
-      >
-        <source src={introVideo} type="video/mp4" />
-      </video>
-
-      {/* 3. MENU OVERLAY */}
-      <div style={{
-        zIndex: 1,
-        padding: '2rem',
-        opacity: introStep === 'menu' ? 1 : 0,
-        transform: introStep === 'menu' ? 'translateY(0)' : 'translateY(20px)',
-        transition: 'all 1s ease',
-        pointerEvents: introStep === 'menu' ? 'all' : 'none',
-        position: 'relative' // For absolute positioning of settings
-      }}>
-        {/* Audio Settings Toggles */}
-        <div style={{
-          position: 'absolute',
-          top: '-60px',
-          right: '0',
-          display: 'flex',
-          gap: '10px'
-        }}>
-          <button
-            onClick={() => {
-              const isEnabled = soundManager.toggleMusic();
-              forceUpdate(n => n + 1); // Helper to re-render
-            }}
-            className="secondary"
-            style={{ padding: '0.5rem 1rem', fontSize: '1.2rem', borderRadius: '10px' }}
-            title="Müziği Aç/Kapat"
-          >
-            {soundManager.musicMuted ? '🔇 Müzik' : '🎵 Müzik'}
-          </button>
-          <button
-            onClick={() => {
-              const isEnabled = soundManager.toggleSfx();
-              forceUpdate(n => n + 1);
-            }}
-            className="secondary"
-            style={{ padding: '0.5rem 1rem', fontSize: '1.2rem', borderRadius: '10px' }}
-            title="Ses Efektlerini Aç/Kapat"
-          >
-            {soundManager.sfxMuted ? '🔇 Efekt' : '🔊 Efekt'}
-          </button>
-        </div>
-
-        <h1 style={{ fontSize: '4rem', marginBottom: '1rem' }}>🚀</h1>
-        <h1 style={{ marginBottom: '1rem', textShadow: '0 0 20px rgba(0,0,0,0.8)' }}>Matematik Yarışması</h1>
-        <p style={{ fontSize: '1.2rem', color: '#e0e7ff', marginBottom: '3rem', textShadow: '0 0 10px rgba(0,0,0,1)' }}>
-          Uzayda matematik okuma saati başlasın!
-        </p>
-
-        <button
-          onClick={handleGameStart}
-          className="pulse-btn"
-          style={{
-            fontSize: '1.5rem',
-            padding: '1rem 4rem',
-            background: 'linear-gradient(45deg, #3b82f6, #8b5cf6)',
-            border: 'none',
-            borderRadius: '50px',
-            color: 'white',
-            cursor: 'pointer',
-            boxShadow: '0 0 20px rgba(139, 92, 246, 0.5)',
-            transition: 'transform 0.2s'
-          }}
-        >
-          Maceraya Başla ▶️
-        </button>
       </div>
     </div>
   );

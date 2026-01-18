@@ -273,10 +273,10 @@ export default function Menu({ userData, onStart, onShowLeaderboard, onShowTourn
                     {/* Tournament Button (Hidden) */}
                     {/*
                     <button
-                        onClick={onShowTournament}
+                        onClick={(e) => { e.preventDefault(); if(name.trim()) onStart(name, selectedAvatar, school, 'bot'); }}
                          ...
                     >
-                        🏆 Turnuva
+                        💻 Bilgisayara Karşı
                     </button>
                     */}
                 </div>
