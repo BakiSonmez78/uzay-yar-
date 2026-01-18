@@ -251,42 +251,60 @@ export default function Tournament({ socket, userData, onBack }) {
     if (view === 'browse') {
         return (
             <div className="card fade-in" style={{ maxWidth: '600px', margin: '2rem auto' }}>
-                <h1 style={{ textAlign: 'center', marginBottom: '2rem' }}>Açık Turnuvalar</h1>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+                    <h1 style={{ margin: 0 }}>Açık Turnuvalar</h1>
+                    <button
+                        onClick={() => socket.emit('get_tournaments')}
+                        style={{
+                            padding: '0.5rem 1rem',
+                            background: 'rgba(255,255,255,0.1)',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            borderRadius: '10px',
+                            color: 'white',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem'
+                        }}
+                    >
+                        🔄 Yenile
+                    </button>
+                </div>
 
-                {availableTournaments.length === 0 ? (
-                    <p style={{ textAlign: 'center', opacity: 0.7 }}>Henüz açık turnuva yok</p>
-                ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {availableTournaments.map(t => (
-                            <div key={t.id} style={{
-                                padding: '1rem',
-                                background: 'rgba(255,255,255,0.05)',
-                                borderRadius: '10px',
-                                border: '1px solid rgba(255,255,255,0.1)'
-                            }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div>
-                                        <div style={{ fontWeight: 'bold' }}>{t.creator.avatar} {t.creator.name}</div>
-                                        <div style={{ opacity: 0.7, fontSize: '0.9rem' }}>
-                                            {t.players.length}/{t.size} Oyuncu
+                {
+                    availableTournaments.length === 0 ? (
+                        <p style={{ textAlign: 'center', opacity: 0.7 }}>Henüz açık turnuva yok</p>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            {availableTournaments.map(t => (
+                                <div key={t.id} style={{
+                                    padding: '1rem',
+                                    background: 'rgba(255,255,255,0.05)',
+                                    borderRadius: '10px',
+                                    border: '1px solid rgba(255,255,255,0.1)'
+                                }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div>
+                                            <div style={{ fontWeight: 'bold' }}>{t.creator.avatar} {t.creator.name}</div>
+                                            <div style={{ opacity: 0.7, fontSize: '0.9rem' }}>
+                                                {t.players.length}/{t.size} Oyuncu
+                                            </div>
                                         </div>
+                                        <button onClick={() => handleRequestJoin(t.id)} style={{
+                                            padding: '0.75rem 1.5rem',
+                                            background: 'linear-gradient(to bottom, #3b82f6, #1d4ed8)',
+                                            border: 'none',
+                                            borderRadius: '10px',
+                                            color: 'white',
+                                            cursor: 'pointer',
+                                            fontWeight: 'bold'
+                                        }}>
+                                            Katıl
+                                        </button>
                                     </div>
-                                    <button onClick={() => handleRequestJoin(t.id)} style={{
-                                        padding: '0.75rem 1.5rem',
-                                        background: 'linear-gradient(to bottom, #3b82f6, #1d4ed8)',
-                                        border: 'none',
-                                        borderRadius: '10px',
-                                        color: 'white',
-                                        cursor: 'pointer',
-                                        fontWeight: 'bold'
-                                    }}>
-                                        Katıl
-                                    </button>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                            ))}
+                        </div>
+                    )
+                }
 
                 <button onClick={() => setView('menu')} style={{
                     marginTop: '2rem',
@@ -300,7 +318,7 @@ export default function Tournament({ socket, userData, onBack }) {
                 }}>
                     ← Geri
                 </button>
-            </div>
+            </div >
         );
     }
 

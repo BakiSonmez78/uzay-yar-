@@ -365,6 +365,26 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('disconnect', () => {
+        console.log(`[Disconnect] Client ${socket.id} disconnected.`);
+
+        // Remove from matchmaking queues
+        for (const mode in queues) {
+            queues[mode] = queues[mode].filter(p => p.socket.id !== socket.id);
+        }
+
+        // Handle tournament cleanup if player was in a waiting tournament
+        Object.keys(tournaments).forEach(tournamentId => {
+            const tournament = tournaments[tournamentId];
+            if (tournament.status === 'waiting') {
+                // If creator disconnected, we could delete the tournament, 
+                // but let's just log for now to see if it's necessary.
+                // For now, let's keep it but maybe remove from participants if we had a way to map socket.id to uid easily.
+                // Since uid is stored, we'd need to track socketId mappings.
+            }
+        });
+    });
+
     const fs = require('fs');
     const path = require('path');
     const LEADERBOARD_FILE = path.join(__dirname, 'leaderboard.json');
@@ -735,6 +755,9 @@ io.on('connection', (socket) => {
                 tournament: tournament,
                 firstRoundMatches: tournament.bracket
             });
+
+            // Update everyone's browse list (tournament is no longer 'waiting')
+            io.emit('tournament_list_update', Object.values(tournaments).filter(t => t.status === 'waiting'));
 
             console.log(`[Tournament] ${tournamentId} STARTED with ${tournament.bracket.length} matches!`);
         }

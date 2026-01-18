@@ -12,17 +12,18 @@ export default function Welcome({ onStart }) {
     // Start beach ambience when logo appears
     soundManager.playBeachAmbience();
 
-    // 1. Logo Phase (6 seconds total: text glow, settle, beach reveal)
+    // Logo Phase (6 seconds total)
     const logoTimer = setTimeout(() => {
-      soundManager.stopBeachAmbience(); // Stop beach sounds before video
-      setIntroStep('video');
+      soundManager.stopBeachAmbience();
+      console.log("Welcome: Logo phase finished. Transitioning to login...");
+      if (onStart) onStart();
     }, 6000);
 
     return () => {
       clearTimeout(logoTimer);
-      soundManager.stopBeachAmbience(); // Cleanup on unmount
+      soundManager.stopBeachAmbience();
     };
-  }, []);
+  }, [onStart]);
 
   // Video Phase Logic
   useEffect(() => {

@@ -44,7 +44,7 @@ const getSocket = () => {
 };
 
 function App() {
-  const [gameState, setGameState] = useState('login'); // login, menu, lobby, matchmaking, playing, results
+  const [gameState, setGameState] = useState('welcome'); // welcome, login, menu, lobby, matchmaking, playing, results
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState({ name: '', avatar: '', uid: '', isGuest: false });
   const [gameMode, setGameMode] = useState(null);
@@ -208,6 +208,7 @@ function App() {
 
   return (
     <div className="app-container">
+      {gameState === 'welcome' && <Welcome onStart={handleEnterGame} />}
       {gameState === 'login' && <Login onLoginSuccess={handleLoginSuccess} />}
       {gameState === 'menu' && <Menu userData={userData} onStart={handleStart} onShowLeaderboard={handleShowLeaderboard} onShowTournament={handleShowTournament} totalScore={userTotalScore} />}
 
