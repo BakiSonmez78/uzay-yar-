@@ -97,7 +97,8 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
                 // Small delay or instant? Instant is better for sync.
                 setCurrentIndex(nextIndex);
 
-                // Also reset bonus points visual if any
+                // Reset streak and bonus when opponent wins
+                setStreak(0);
                 setBonusPoints(0);
                 setFeedback(null);
             }
