@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { soundManager } from './utils/soundManager';
 import Welcome from './components/Welcome';
 import Login from './components/Login';
@@ -66,6 +67,43 @@ function App() {
   const [isConnected, setIsConnected] = useState(false);
 
   console.log("App Render: gameState =", gameState);
+
+  // Firebase Auth State Listener - Auto-login on page refresh
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user && !isAuthenticated) {
+        console.log('[Auth] User session restored:', user.email || user.uid);
+
+        // Check if it's a Google user or anonymous
+        const isGoogleUser = user.providerData.some(p => p.providerId === 'google.com');
+
+        if (isGoogleUser) {
+          // Restore Google user
+          setUserData({
+            name: user.displayName || 'Google User',
+            avatar: '👤',
+            email: user.email,
+            uid: user.uid,
+            isGuest: false,
+            school: '' // Could be loaded from Firestore if saved
+          });
+          setIsAuthenticated(true);
+          setGameState('menu');
+        } else {
+          // Anonymous user - don't auto-restore (they get new session each time)
+          console.log('[Auth] Anonymous user detected, requiring fresh login');
+        }
+      } else if (!user && isAuthenticated) {
+        // User logged out
+        console.log('[Auth] User logged out');
+        setIsAuthenticated(false);
+        setGameState('login');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const socket = getSocket();
