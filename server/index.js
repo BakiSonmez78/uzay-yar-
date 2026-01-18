@@ -140,6 +140,166 @@ const generateQuestions = (mode) => {
     return questions;
 };
 
+// Helper to start a tournament and generate bracket
+const startTournament = (tournamentId) => {
+    const tournament = tournaments[tournamentId];
+    if (!tournament || tournament.status !== 'waiting') return;
+
+    tournament.status = 'in_progress';
+
+    // Generate bracket (Random seeding)
+    const shuffledPlayers = [...tournament.players].sort(() => Math.random() - 0.5);
+    tournament.bracket = [];
+
+    const totalRounds = Math.log2(tournament.size);
+    console.log(`[Tournament] Starting ${tournamentId} with ${tournament.size} players (${totalRounds} rounds)`);
+
+    // Create first round matches
+    // Note: This logic assumes size is a power of 2 (2, 4, 8)
+    for (let i = 0; i < shuffledPlayers.length; i += 2) {
+        const player1 = shuffledPlayers[i];
+        const player2 = shuffledPlayers[i + 1];
+
+        const matchId = `match_${tournamentId}_R1_${i / 2}`;
+        const gameRoomId = `room_${matchId}`;
+        const mode = '+'; // Default mode, or could be random
+
+        // Create the game room for this match
+        const game = {
+            roomId: gameRoomId,
+            tournamentId: tournamentId,
+            matchId: matchId,
+            round: 1,
+            // Standard format: Players as Object Map
+            players: {
+                [player1.uid]: { ...player1, score: 0, lives: 5, socketId: player1.socketId },
+                [player2.uid]: { ...player2, score: 0, lives: 5, socketId: player2.socketId }
+            },
+            playersList: [player1, player2],
+            questions: generateQuestions(mode),
+            streaks: { [player1.uid]: 0, [player2.uid]: 0 },
+            isTournamentMatch: true,
+            winner: null,
+            startTime: Date.now(),
+            duration: 60
+        };
+
+        // Save game
+        games[gameRoomId] = game;
+
+        // Add to bracket
+        tournament.bracket.push({
+            id: matchId,
+            round: 1,
+            roomId: gameRoomId,
+            players: [player1, player2],
+            winner: null,
+            status: 'scheduled' // scheduled, in_progress, finished
+        });
+
+        console.log(`[Tournament] Created Round 1 match: ${player1.name} vs ${player2.name} (Room: ${gameRoomId})`);
+    }
+
+    // Notify all players in the tournament
+    io.to(tournamentId).emit('tournament_started', {
+        tournament: tournament,
+        firstRoundMatches: tournament.bracket.filter(m => m.round === 1)
+    });
+
+    // Update global list (remove from waiting)
+    io.emit('tournament_list_update', Object.values(tournaments).filter(t => t.status === 'waiting'));
+};
+
+const handleTournamentMatchEnd = (game, winnerId) => {
+    // Logic to update bracket and create next round matches
+    const tournament = tournaments[game.tournamentId];
+    if (!tournament) return;
+
+    const match = tournament.bracket.find(m => m.roomId === game.roomId);
+    if (!match) return;
+
+    match.winner = match.players.find(p => p.uid === winnerId);
+    match.status = 'finished';
+
+    console.log(`[Tournament] Match ${match.id} finished. Winner: ${match.winner.name}`);
+
+    // Check if current round is complete
+    const currentRound = match.round;
+    const roundMatches = tournament.bracket.filter(m => m.round === currentRound);
+
+    if (roundMatches.every(m => m.status === 'finished')) {
+        console.log(`[Tournament] Round ${currentRound} complete! Generating next round...`);
+
+        const winners = roundMatches.map(m => m.winner);
+
+        if (winners.length === 1) {
+            // WE HAVE A TOURNAMENT WINNER!
+            tournament.status = 'finished';
+            tournament.winner = winners[0];
+            io.to(tournament.id).emit('tournament_finished', { winner: winners[0] });
+            console.log(`[Tournament] WINNER IS ${winners[0].name}`);
+        } else {
+            // Create next round
+            const nextRound = currentRound + 1;
+            const newMatches = [];
+
+            for (let i = 0; i < winners.length; i += 2) {
+                const p1 = winners[i];
+                const p2 = winners[i + 1];
+
+                const nextMatchId = `match_${tournament.id}_R${nextRound}_${i / 2}`;
+                const nextRoomId = `room_${nextMatchId}`;
+
+                // Create game room for next round
+                const nextGame = {
+                    roomId: nextRoomId,
+                    tournamentId: tournament.id,
+                    matchId: nextMatchId,
+                    round: nextRound,
+                    players: {
+                        [p1.uid]: { ...p1, score: 0, lives: 5, socketId: p1.socketId },
+                        [p2.uid]: { ...p2, score: 0, lives: 5, socketId: p2.socketId }
+                    },
+                    playersList: [p1, p2], // Helper for bracket display if needed
+                    questions: generateQuestions('+'),
+                    streaks: { [p1.uid]: 0, [p2.uid]: 0 },
+                    isTournamentMatch: true,
+                    winner: null,
+                    startTime: Date.now(),
+                    duration: 60
+                };
+                games[nextRoomId] = nextGame;
+
+                const newMatch = {
+                    id: nextMatchId,
+                    round: nextRound,
+                    roomId: nextRoomId,
+                    players: [p1, p2],
+                    winner: null,
+                    status: 'scheduled'
+                };
+
+                tournament.bracket.push(newMatch);
+                newMatches.push(newMatch);
+            }
+
+            // Notify players of next round
+            io.to(tournament.id).emit('tournament_round_update', {
+                round: nextRound,
+                matches: newMatches
+            });
+
+            // Start the next round matches automatically? 
+            // Or wait for players to be ready?
+            // For now, let's auto-notify and client handles join.
+            // Client listener `tournament_round_update` should check if I am in a new match and join.
+        }
+    } else {
+        // Round not done, just update bracket UI
+        io.to(tournament.id).emit('tournament_bracket_update', { bracket: tournament.bracket });
+    }
+};
+
 // Start a Game Room
 const startGame = (roomId, mode, players, isBotGame = false) => {
     const questions = generateQuestions(mode);
@@ -398,9 +558,13 @@ io.on('connection', (socket) => {
         if (game) {
             console.log(`[player_eliminated] Player ${playerId} eliminated in room ${roomId}`);
 
-            // Find the OTHER player (the winner)
-            // Just looking for the player who is NOT the eliminated one is safer for 2-player games
-            const winner = game.players.find(p => p.uid !== playerId);
+            // Hybrid Check: game.players can be Array (normal) or Object (tournament)
+            let winner;
+            if (Array.isArray(game.players)) {
+                winner = game.players.find(p => p.uid !== playerId);
+            } else {
+                winner = Object.values(game.players).find(p => p.uid !== playerId);
+            }
 
             if (winner) {
                 io.to(roomId).emit('opponent_eliminated', {
@@ -408,9 +572,25 @@ io.on('connection', (socket) => {
                     eliminatedId: playerId
                 });
                 console.log(`[player_eliminated] Declared ${winner.uid} as winner (Opponent: ${playerId})`);
+
+                // If tournament, trigger progression
+                if (game.isTournamentMatch) {
+                    handleTournamentMatchEnd(game, winner.uid);
+                }
             } else {
-                console.warn(`[player_eliminated] Could not find winner in room ${roomId}. Players:`, game.players.map(p => p.uid));
+                console.warn(`[player_eliminated] Could not find winner in room ${roomId}`);
             }
+        }
+    });
+
+    socket.on('tournament_match_over', ({ roomId, winnerId }) => {
+        const game = games[roomId];
+        if (game && game.isTournamentMatch) {
+            console.log(`[tournament_match_over] Match ${roomId} reported over by client. Winner: ${winnerId}`);
+
+            // Validate? (optional)
+
+            handleTournamentMatchEnd(game, winnerId);
         }
     });
 
@@ -740,9 +920,7 @@ io.on('connection', (socket) => {
 
         // Check start condition
         if (tournament.players.length >= tournament.size) {
-            tournament.status = 'in_progress';
-            io.to(tournamentId).emit('tournament_started', tournament);
-            console.log(`[Tournament] ${tournament.id} STARTED!`);
+            startTournament(tournamentId);
         }
 
         // Update global list
@@ -763,60 +941,7 @@ io.on('connection', (socket) => {
         io.to(tournamentId).emit('tournament_update', tournament);
 
         if (tournament.players.length >= tournament.size) {
-            tournament.status = 'in_progress';
-
-            // Generate bracket (simple single elimination)
-            const shuffledPlayers = [...tournament.players].sort(() => Math.random() - 0.5);
-            tournament.bracket = [];
-
-            // Create first round matches
-            for (let i = 0; i < shuffledPlayers.length; i += 2) {
-                const player1 = shuffledPlayers[i];
-                const player2 = shuffledPlayers[i + 1];
-
-                const roomId = `tour_match_${tournamentId}_${i / 2}`;
-                const mode = '+'; // Default to addition for tournament
-
-                // Create game room
-                const game = {
-                    roomId: roomId,
-                    tournamentId: tournamentId,
-                    players: {
-                        [player1.uid]: player1,
-                        [player2.uid]: player2
-                    },
-                    questions: generateQuestions(mode, 10), // 10 questions per match
-                    currentIndex: 0,
-                    scores: {
-                        [player1.uid]: 0,
-                        [player2.uid]: 0
-                    },
-                    locked: false,
-                    startTime: Date.now(),
-                    duration: 60, // 60 seconds per match
-                    isTournamentMatch: true
-                };
-
-                games[roomId] = game;
-                tournament.bracket.push({
-                    round: 1,
-                    roomId: roomId,
-                    players: [player1, player2],
-                    winner: null
-                });
-
-                console.log(`[Tournament] Created match: ${player1.name} vs ${player2.name}`);
-            }
-
-            io.to(tournamentId).emit('tournament_started', {
-                tournament: tournament,
-                firstRoundMatches: tournament.bracket
-            });
-
-            // Update everyone's browse list (tournament is no longer 'waiting')
-            io.emit('tournament_list_update', Object.values(tournaments).filter(t => t.status === 'waiting'));
-
-            console.log(`[Tournament] ${tournamentId} STARTED with ${tournament.bracket.length} matches!`);
+            startTournament(tournamentId);
         }
     });
 
