@@ -807,12 +807,24 @@ io.on('connection', (socket) => {
         io.emit('tournaments_list', Object.values(tournaments).filter(t => t.status !== 'finished'));
         socket.emit('tournament_joined', tournament);
 
-        // Start tournament if full
         if (tournament.players.length === tournament.size) {
             tournament.status = 'in_progress';
             io.emit('tournament_started', tournamentId);
             console.log(`Tournament ${tournamentId} started with ${tournament.size} players`);
             // TODO: Create bracket and start matches
+            startTournament(tournamentId);
+        }
+    });
+
+    socket.on('tournament_match_over', ({ roomId, winnerId }) => {
+        const game = games[roomId];
+        if (game && game.isTournamentMatch) {
+            console.log(`[Tournament] Client reported match over: ${roomId}, Winner: ${winnerId}`);
+            handleTournamentMatchEnd(game, winnerId);
+        } else {
+            console.log(`[Tournament] Warning: Match over reported for invalid/missing game: ${roomId}`);
+            // Fallback: Try to find tournament and match manually?
+            // For now, assume sync is correct.
         }
     });
 
@@ -851,6 +863,7 @@ io.on('connection', (socket) => {
             tournament.status = 'in_progress';
             io.to(tournament.id).emit('tournament_started', tournament);
             console.log(`[Tournament] ${tournament.id} STARTED!`);
+            startTournament(tournament.id);
         }
     });
 
