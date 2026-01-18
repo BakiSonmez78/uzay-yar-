@@ -1015,9 +1015,35 @@ io.on('connection', (socket) => {
             // Re-join socket room
             socket.join(activeTournament.id);
 
-            // Update socketId record
+            // Update socketId record in TOURNAMENT
             const player = activeTournament.players.find(p => p.uid === uid);
             if (player) player.socketId = socket.id;
+
+            // Check for active game and rejoin
+            if (activeTournament.bracket) {
+                const activeMatch = activeTournament.bracket.find(m =>
+                    m.status === 'in_progress' && m.players && m.players.some(p => p.uid === uid)
+                );
+
+                if (activeMatch) {
+                    const game = games[activeMatch.roomId];
+                    if (game) {
+                        console.log(`[Tournament] Also rejoining active game room: ${activeMatch.roomId}`);
+                        socket.join(activeMatch.roomId);
+
+                        // Update socketId in game.playersList (Array)
+                        if (game.playersList) {
+                            const pList = game.playersList.find(p => p.uid === uid);
+                            if (pList) pList.socketId = socket.id;
+                        }
+
+                        // Update socketId in game.players (Object Map)
+                        if (game.players && !Array.isArray(game.players) && game.players[uid]) {
+                            game.players[uid].socketId = socket.id;
+                        }
+                    }
+                }
+            }
 
             // Send full details
             socket.emit('tournament_rejoined', { tournament: activeTournament });
