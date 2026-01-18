@@ -5,6 +5,7 @@ export default function Tournament({ socket, userData, onBack }) {
     const [currentTournament, setCurrentTournament] = useState(null);
     const [availableTournaments, setAvailableTournaments] = useState([]);
     const [isCreator, setIsCreator] = useState(false);
+    const [isRequesting, setIsRequesting] = useState(false);
 
     useEffect(() => {
         console.log('[Tournament] useEffect mounted. Socket connected:', socket.connected);
@@ -100,6 +101,12 @@ export default function Tournament({ socket, userData, onBack }) {
     };
 
     const handleRequestJoin = (tournamentId) => {
+        if (isRequesting) {
+            console.log('[Tournament] Already requesting, ignoring duplicate click');
+            return;
+        }
+
+        setIsRequesting(true);
         console.log('[Tournament] handleRequestJoin called with:', tournamentId);
         console.log('[Tournament] userData:', userData);
         socket.emit('request_join_tournament', {
@@ -111,7 +118,9 @@ export default function Tournament({ socket, userData, onBack }) {
             }
         });
         console.log('[Tournament] Emitted request_join_tournament event');
-        // Don't set currentTournament here - wait for join_request_sent event
+
+        // Reset after 3 seconds if no response
+        setTimeout(() => setIsRequesting(false), 3000);
     };
 
     const handleApprove = (playerUid) => {
@@ -288,16 +297,20 @@ export default function Tournament({ socket, userData, onBack }) {
                                                 {t.players.length}/{t.size} Oyuncu
                                             </div>
                                         </div>
-                                        <button onClick={() => handleRequestJoin(t.id)} style={{
-                                            padding: '0.75rem 1.5rem',
-                                            background: 'linear-gradient(to bottom, #3b82f6, #1d4ed8)',
-                                            border: 'none',
-                                            borderRadius: '10px',
-                                            color: 'white',
-                                            cursor: 'pointer',
-                                            fontWeight: 'bold'
-                                        }}>
-                                            Katıl
+                                        <button
+                                            onClick={() => handleRequestJoin(t.id)}
+                                            disabled={isRequesting}
+                                            style={{
+                                                padding: '0.75rem 1.5rem',
+                                                background: isRequesting ? '#666' : 'linear-gradient(to bottom, #3b82f6, #1d4ed8)',
+                                                border: 'none',
+                                                borderRadius: '10px',
+                                                color: 'white',
+                                                cursor: isRequesting ? 'not-allowed' : 'pointer',
+                                                fontWeight: 'bold',
+                                                opacity: isRequesting ? 0.6 : 1
+                                            }}>
+                                            {isRequesting ? 'Gönderiliyor...' : 'Katıl'}
                                         </button>
                                     </div>
                                 </div>

@@ -678,7 +678,13 @@ io.on('connection', (socket) => {
     });
 
     socket.on('request_join_tournament', ({ tournamentId, player }) => {
+        console.log(`[Tournament] ========== JOIN REQUEST RECEIVED ==========`);
+        console.log(`[Tournament] Tournament ID: ${tournamentId}`);
+        console.log(`[Tournament] Player:`, player);
+        console.log(`[Tournament] Socket ID: ${socket.id}`);
+
         const tournament = tournaments[tournamentId];
+        console.log(`[Tournament] Tournament found:`, tournament ? 'YES' : 'NO');
 
         if (!tournament) {
             console.log(`[Tournament] Join failed: ${tournamentId} not found`);
@@ -705,10 +711,13 @@ io.on('connection', (socket) => {
         // Join the tournament room to receive updates
         socket.join(tournamentId);
 
+        console.log(`[Tournament] ✅ Emitting join_request_sent to ${socket.id}`);
         socket.emit('join_request_sent', { tournamentId });
+
+        console.log(`[Tournament] ✅ Emitting tournament_update to room ${tournamentId}`);
         io.to(tournamentId).emit('tournament_update', tournament);
 
-        console.log(`[Tournament] ${player.name} requested to join ${tournamentId}. Pending: ${tournament.pendingRequests.length}`);
+        console.log(`[Tournament] ✅ ${player.name} requested to join ${tournamentId}. Pending: ${tournament.pendingRequests.length}`);
 
         // Also update the public list because participants count might be shown
         io.emit('tournament_list_update', Object.values(tournaments).filter(t => t.status === 'waiting'));
