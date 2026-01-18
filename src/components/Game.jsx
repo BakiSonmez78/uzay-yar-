@@ -89,6 +89,19 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
                 setLocalOpponentScore(newScores[opponentId]);
             }
 
+            // If OPPONENT solved it, we must advance too!
+            if (winnerId !== playerId) {
+                // Optional: Visual cue that opponent won this round
+                console.log("[Game] Opponent solved question. Advancing...");
+
+                // Small delay or instant? Instant is better for sync.
+                setCurrentIndex(nextIndex);
+
+                // Also reset bonus points visual if any
+                setBonusPoints(0);
+                setFeedback(null);
+            }
+
             // Sync final scores check
             if (nextIndex >= questions.length) {
                 setTimeout(() => {
