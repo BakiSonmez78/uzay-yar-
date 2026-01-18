@@ -48,13 +48,15 @@ app.get('/', (req, res) => {
 
 const io = new Server(server, {
     cors: {
-        origin: "*", // Allow all for dev
-        methods: ["GET", "POST"]
+        origin: "*", // Allow all origins
+        methods: ["GET", "POST"],
+        credentials: true
     },
+    transports: ['polling', 'websocket'], // CRITICAL: Polling first, then upgrade
     pingTimeout: 60000,
     pingInterval: 25000,
     upgradeTimeout: 30000,
-    transports: ['websocket', 'polling']
+    allowUpgrades: true
 });
 
 // Game State Storage

@@ -22,26 +22,23 @@ const getApiUrl = () => {
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     return 'http://localhost:3001';
   }
-  // Auto-detected local IP
-  // return 'http://192.168.1.59:3001';
-
-  // Production Backend (Render)
   return 'https://uzay-yarisi-backend.onrender.com';
 };
 
-// Initialize socket lazily
-let socket;
+// Initialize socket ONCE outside component - CRITICAL for stability
+const socket = io(getApiUrl(), {
+  transports: ['polling', 'websocket'], // Polling first, then upgrade
+  withCredentials: true,
+  autoConnect: true,
+  reconnection: true,
+  reconnectionAttempts: 10,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  timeout: 20000
+});
 
-const getSocket = () => {
-  if (!socket) {
-    socket = io(getApiUrl(), {
-      reconnection: true,
-      reconnectionAttempts: 5,
-      transports: ['websocket', 'polling']
-    });
-  }
-  return socket;
-};
+// Helper function to get socket instance
+const getSocket = () => socket;
 
 function App() {
   const [gameState, setGameState] = useState('welcome'); // welcome, login, menu, lobby, matchmaking, playing, results
