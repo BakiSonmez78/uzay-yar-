@@ -43,7 +43,7 @@ app.get('/health', (req, res) => {
 
 // Root endpoint
 app.get('/', (req, res) => {
-    res.send('Uzay Yarışı Backend v1.0.6 - Active');
+    res.send('Uzay Yarışı Backend v1.0.8 - Polling First Strategy');
 });
 
 const io = new Server(server, {
