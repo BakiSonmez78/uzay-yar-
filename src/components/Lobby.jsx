@@ -1,8 +1,8 @@
 import React from 'react';
 import { soundManager } from '../utils/soundManager';
 
-export default function Lobby({ name, avatar, onSelectMode }) {
-    const [opponentType, setOpponentType] = React.useState('human'); // 'human' or 'bot'
+export default function Lobby({ name, avatar, onSelectMode, initialOpponentType = 'human' }) {
+    const [opponentType, setOpponentType] = React.useState(initialOpponentType); // 'human' or 'bot'
     const [botDifficulty, setBotDifficulty] = React.useState('medium'); // 'easy', 'medium', 'hard'
     const [, forceUpdate] = React.useState(0); // For re-rendering when sound settings change
 
@@ -52,24 +52,18 @@ export default function Lobby({ name, avatar, onSelectMode }) {
             <div className="avatar">{avatar}</div>
             <h2>Merhaba, {name}!</h2>
 
-            <div style={{ marginBottom: '2rem' }}>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>Rakibini Seç:</p>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-                    <button
-                        className={opponentType === 'human' ? 'primary' : 'secondary'}
-                        onClick={() => setOpponentType('human')}
-                        style={{ flex: 1 }}
-                    >
-                        🌍 Gerçek Oyuncu
-                    </button>
-                    <button
-                        className={opponentType === 'bot' ? 'primary' : 'secondary'}
-                        onClick={() => setOpponentType('bot')}
-                        style={{ flex: 1 }}
-                    >
-                        💻 Bilgisayar
-                    </button>
-                </div>
+            <div style={{
+                margin: '1rem 0',
+                padding: '0.5rem 1rem',
+                background: opponentType === 'human' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                border: opponentType === 'human' ? '1px solid #3b82f6' : '1px solid #10b981',
+                borderRadius: '20px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontWeight: 'bold'
+            }}>
+                {opponentType === 'human' ? '🌍 Online Mod' : '💻 Bilgisayara Karşı'}
             </div>
 
             {/* Bot Difficulty Selection */}

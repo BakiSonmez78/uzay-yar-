@@ -44,7 +44,8 @@ const getSocket = () => {
 };
 
 function App() {
-  const [gameState, setGameState] = useState('login'); // login, menu, lobby, matchmaking, playing, results
+  const [gameState, setGameState] = useState('welcome'); // Start with Welcome screen
+  const [lobbyMode, setLobbyMode] = useState('human'); // 'human' or 'bot'
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState({ name: '', avatar: '', uid: '', isGuest: false, school: '' });
   const [gameMode, setGameMode] = useState(null);
@@ -90,20 +91,7 @@ function App() {
       setOpponentScore(data.score);
     });
 
-    socket.on('question_solved', ({ newScores }) => {
-      console.log('Received question_solved:', newScores);
-
-      const myId = playerIdRef.current;
-      const contextPlayers = Object.keys(newScores);
-      const opponentId = contextPlayers.find(id => id !== myId);
-
-      if (opponentId) {
-        setOpponentScore(newScores[opponentId]);
-        console.log('Setting opponent score for ID', opponentId, ':', newScores[opponentId]);
-      } else {
-        console.warn('Opponent ID not found in scores:', newScores);
-      }
-    });
+    // question_solved listener removed to keep App.jsx clean. Game.jsx handles syncing.
 
     // Keep-alive ping to prevent Render.com cold starts
     const keepAliveInterval = setInterval(() => {
@@ -123,9 +111,10 @@ function App() {
     };
   }, []);
 
-  const handleStart = (name, avatar, school) => {
+  const handleStart = (name, avatar, school, preferredMode = 'human') => {
     // Keep user data from login, just update if needed
     setUserData(prev => ({ ...prev, name: name || prev.name, avatar: avatar || prev.avatar, school: school || prev.school }));
+    setLobbyMode(preferredMode);
     setGameState('lobby');
   };
 
@@ -274,6 +263,7 @@ function App() {
           name={userData.name}
           avatar={userData.avatar}
           onSelectMode={handleSelectMode}
+          initialOpponentType={lobbyMode}
         />
       )}
 

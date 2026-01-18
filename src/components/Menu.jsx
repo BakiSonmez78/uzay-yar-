@@ -226,12 +226,15 @@ export default function Menu({ userData, onStart, onShowLeaderboard, onShowTourn
 
 
                 {/* GAME MODE BUTTONS */}
-                <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
                     <button
-                        onClick={handleStart}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            if (name.trim()) onStart(name, selectedAvatar, school, 'human');
+                        }}
                         className="pulse-btn"
                         style={{
-                            flex: 1,
+                            width: '100%',
                             padding: '1.2rem',
                             fontSize: '1.5rem',
                             fontWeight: 'bold',
@@ -243,26 +246,39 @@ export default function Menu({ userData, onStart, onShowLeaderboard, onShowTourn
                             cursor: 'pointer'
                         }}
                     >
-                        🎮 Tek Oyun
+                        🌍 Online Oyna
                     </button>
 
                     <button
-                        onClick={onShowTournament}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            if (name.trim()) onStart(name, selectedAvatar, school, 'bot');
+                        }}
                         style={{
-                            flex: 1,
+                            width: '100%',
                             padding: '1.2rem',
                             fontSize: '1.5rem',
                             fontWeight: 'bold',
-                            background: 'linear-gradient(to bottom, #facc15, #ca8a04)',
+                            background: 'linear-gradient(to bottom, #10b981, #047857)',
                             border: 'none',
                             borderRadius: '20px',
-                            color: '#422006',
-                            boxShadow: '0 4px 0 #a16207, 0 10px 20px rgba(0,0,0,0.3)',
+                            color: 'white',
+                            boxShadow: '0 4px 0 #047857, 0 10px 20px rgba(0,0,0,0.3)',
                             cursor: 'pointer'
                         }}
                     >
+                        💻 Bilgisayara Karşı
+                    </button>
+
+                    {/* Tournament Button (Hidden) */}
+                    {/*
+                    <button
+                        onClick={onShowTournament}
+                         ...
+                    >
                         🏆 Turnuva
                     </button>
+                    */}
                 </div>
             </div>
         </div>
