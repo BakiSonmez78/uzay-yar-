@@ -292,7 +292,7 @@ function App() {
           opponentScore={opponentScore}
           socket={getSocket()}
           roomId={gameData.roomId}
-          playerId={playerIdRef.current}
+          playerId={gameData.isTournamentMatch ? userData.uid : playerIdRef.current}
           myName={userData.name}
           myCountry={Object.values(gameData.players).find(p => p.name === userData.name)?.country}
           onFinish={handleFinish}
