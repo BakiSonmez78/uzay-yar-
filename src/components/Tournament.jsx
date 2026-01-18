@@ -25,19 +25,12 @@ export default function Tournament({ socket, userData, onBack }) {
             setView('waiting');
         };
 
-        const onJoinRequestSent = ({ tournamentId }) => {
-            console.log('[Tournament] Join request sent for:', tournamentId);
-            // Use callback to get the latest availableTournaments from state
-            setAvailableTournaments(prev => {
-                const tournament = prev.find(t => t.id === tournamentId);
-                console.log('[Tournament] Found target in prev state:', tournament);
-                if (tournament) {
-                    setCurrentTournament(tournament);
-                    setIsCreator(false);
-                    setView('waiting');
-                }
-                return prev;
-            });
+        const onJoinedSuccess = (tournament) => {
+            console.log('[Tournament] Joined success:', tournament);
+            setCurrentTournament(tournament);
+            setIsCreator(false);
+            setView('waiting');
+            setIsRequesting(false); // Enable buttons again
         };
 
         const onUpdate = (tournament) => {
@@ -59,7 +52,19 @@ export default function Tournament({ socket, userData, onBack }) {
 
         const onStarted = (data) => {
             console.log('[Tournament] Started event received:', data);
+
+            // Critical check for data and tournament property
+            if (!data || !data.tournament) {
+                console.error('[Tournament] Invalid started event data:', data);
+                return;
+            }
+
             const { tournament, firstRoundMatches } = data;
+
+            if (!firstRoundMatches) {
+                console.error('[Tournament] No firstRoundMatches in started event:', data);
+                return;
+            }
 
             const myMatch = firstRoundMatches.find(match =>
                 match.players.some(p => p.uid === userData.uid)
@@ -75,7 +80,7 @@ export default function Tournament({ socket, userData, onBack }) {
 
         socket.on('tournament_list_update', onListUpdate);
         socket.on('tournament_created', onCreated);
-        socket.on('join_request_sent', onJoinRequestSent);
+        socket.on('tournament_joined_success', onJoinedSuccess);
         socket.on('tournament_update', onUpdate);
         socket.on('tournament_started', onStarted);
 
@@ -83,7 +88,7 @@ export default function Tournament({ socket, userData, onBack }) {
             console.log('[Tournament] useEffect cleanup');
             socket.off('tournament_list_update', onListUpdate);
             socket.off('tournament_created', onCreated);
-            socket.off('join_request_sent', onJoinRequestSent);
+            socket.off('tournament_joined_success', onJoinedSuccess);
             socket.off('tournament_update', onUpdate);
             socket.off('tournament_started', onStarted);
         };

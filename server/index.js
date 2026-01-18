@@ -43,7 +43,7 @@ app.get('/health', (req, res) => {
 
 // Root endpoint
 app.get('/', (req, res) => {
-    res.send('Uzay Yarışı Backend v1.1.2 - Elimination Logic Fixed');
+    res.send('Uzay Yarışı Backend v1.1.3 - Instant Tournament Join');
 });
 
 const io = new Server(server, {
@@ -711,48 +711,41 @@ io.on('connection', (socket) => {
     });
 
     socket.on('request_join_tournament', ({ tournamentId, player }) => {
-        console.log(`[Tournament] ========== JOIN REQUEST RECEIVED ==========`);
-        console.log(`[Tournament] Tournament ID: ${tournamentId}`);
-        console.log(`[Tournament] Player:`, player);
-        console.log(`[Tournament] Socket ID: ${socket.id}`);
+        console.log(`[Tournament] ========== SKIP APPROVAL JOIN ==========`);
+        console.log(`[Tournament] Tournament ID: ${tournamentId}, Player: ${player.name}`);
 
         const tournament = tournaments[tournamentId];
-        console.log(`[Tournament] Tournament found:`, tournament ? 'YES' : 'NO');
 
-        if (!tournament) {
-            console.log(`[Tournament] Join failed: ${tournamentId} not found`);
+        if (!tournament || tournament.status !== 'waiting') return;
+
+        // Prevent duplicates
+        if (tournament.players.some(p => p.uid === player.uid)) return;
+
+        // Check if full
+        if (tournament.players.length >= tournament.size) {
+            socket.emit('tournament_full');
             return;
         }
 
-        if (tournament.status !== 'waiting') {
-            console.log(`[Tournament] Join failed: ${tournamentId} status is ${tournament.status}`);
-            return;
-        }
-
-        if (tournament.players.some(p => p.uid === player.uid)) {
-            console.log(`[Tournament] Player ${player.name} already in ${tournamentId}`);
-            return;
-        }
-
-        if (tournament.pendingRequests.some(r => r.player.uid === player.uid)) {
-            console.log(`[Tournament] Player ${player.name} already has pending request for ${tournamentId}`);
-            return;
-        }
-
-        tournament.pendingRequests.push({ player: player, requestedAt: Date.now() });
-
-        // Join the tournament room to receive updates
+        // Add player directly (bypass pendingRequests)
+        player.socketId = socket.id; // Ensure socketId is up to date
+        tournament.players.push(player);
         socket.join(tournamentId);
 
-        console.log(`[Tournament] ✅ Emitting join_request_sent to ${socket.id}`);
-        socket.emit('join_request_sent', { tournamentId });
+        console.log(`[Tournament] ${player.name} joined ${tournamentId}. (${tournament.players.length}/${tournament.size})`);
 
-        console.log(`[Tournament] ✅ Emitting tournament_update to room ${tournamentId}`);
+        // Notify everyone
         io.to(tournamentId).emit('tournament_update', tournament);
+        socket.emit('tournament_joined_success', tournament); // Tell client they are IN
 
-        console.log(`[Tournament] ✅ ${player.name} requested to join ${tournamentId}. Pending: ${tournament.pendingRequests.length}`);
+        // Check start condition
+        if (tournament.players.length >= tournament.size) {
+            tournament.status = 'in_progress';
+            io.to(tournamentId).emit('tournament_started', tournament);
+            console.log(`[Tournament] ${tournament.id} STARTED!`);
+        }
 
-        // Also update the public list because participants count might be shown
+        // Update global list
         io.emit('tournament_list_update', Object.values(tournaments).filter(t => t.status === 'waiting'));
     });
 

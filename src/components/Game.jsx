@@ -10,6 +10,7 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
     const [bonusPoints, setBonusPoints] = useState(0); // For UI display
     const [lives, setLives] = useState(5); // 5 lives system
     const [opponentLives, setOpponentLives] = useState(5);
+    const [isFinished, setIsFinished] = useState(false); // To stop timer and interactions
 
     const [localOpponentScore, setLocalOpponentScore] = useState(opponentScore || 0);
 
@@ -20,11 +21,25 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
         setLocalOpponentScore(opponentScore);
     }, [opponentScore]);
 
+    // Wrap onFinish to prevent multiple calls and ensure cleanup
+    const handleFinishGame = (result) => {
+        if (isFinished) return;
+        setIsFinished(true); // Stop everything
+
+        // Slight delay to allow UI (alerts) to show before unmounting
+        setTimeout(() => {
+            onFinish(result);
+        }, 100);
+    };
+
     useEffect(() => {
         if (timeLeft <= 0) {
-            onFinish({ score, opScore: localOpponentScore });
+            handleFinishGame({ score, opScore: localOpponentScore });
             return;
         }
+
+        // Stop timer if finished
+        if (isFinished) return;
 
         // Calculate absolute end time based on server start time
         // Note: Using client clock for 'now' vs server clock for 'startTime' assumes roughly synced clocks.
@@ -74,37 +89,35 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
                 setLocalOpponentScore(newScores[opponentId]);
             }
 
-            // Visual feedback - ONLY if it wasn't me who solved it
-            // Since we do optimistic updates, we don't need to do anything for our own solve here EXCEPT sync the score
-            // to the server's truth.
-
-            const myId = playerId;
-
-            // Sync final scores from server to be sure
-            if (newScores[myId] !== undefined) {
-                // Optional: We could force setScore(newScores[myId]) here, but it might cause jumpy UI if laggy.
-                // Better to trust optimistic unless huge drift.
+            // Sync final scores check
+            if (nextIndex >= questions.length) {
+                setTimeout(() => {
+                    handleFinishGame({ score: newScores[playerId], opScore: opponentId ? newScores[opponentId] : 0 });
+                }, 1000);
             }
         });
 
         socket.on('opponent_eliminated', ({ winnerId, eliminatedId }) => {
+            if (isFinished) return;
             console.log('[Game] opponent_eliminated received:', { winnerId, eliminatedId, myId: playerId });
 
             // Logic: If the eliminated player is NOT me, then I won!
             if (eliminatedId !== playerId) {
+                setIsFinished(true);
                 setTimeout(() => {
                     alert("Rakip 5 hata yaptı ve elendi! Kazandın! 🏆");
-                    onFinish({ score: score + 100, opScore: 0, outcome: 'opponent_eliminated' }); // Bonus for survival
+                    handleFinishGame({ score: score + 100, opScore: 0, outcome: 'opponent_eliminated' }); // Bonus for survival
                 }, 500);
             }
         });
 
         socket.on('opponent_disconnected', ({ winnerId }) => {
+            if (isFinished) return;
             if (winnerId === playerId) {
                 // Opponent left, we win!
                 setFeedback('correct'); // Just a visual cue
                 alert("Rakip oyundan ayrıldı! Kazandın! 🏆");
-                onFinish({ score: score + 50, opScore: 0 }); // Bonus points for "technical KO"
+                handleFinishGame({ score: score + 50, opScore: 0 }); // Bonus points for "technical KO"
             }
         });
 
@@ -118,7 +131,7 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
             socket.off('opponent_eliminated');
             socket.off('opponent_wrong_answer');
         };
-    }, [socket, questions.length, onFinish, playerId, score]);
+    }, [socket, questions.length, playerId, isFinished]); // Removed score from dependency to avoid re-binding loop
 
     const handleAnswer = (selected, e) => {
         if (e && e.target) {
@@ -140,11 +153,12 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
                 const newLives = prev - 1;
                 if (newLives <= 0) {
                     // Game over - eliminated
+                    setIsFinished(true);
                     setTimeout(() => {
                         // Notify server about elimination
                         socket.emit('player_eliminated', { roomId, playerId });
                         alert('5 hata yaptın! Elendin! 💔');
-                        onFinish({ score, opScore: localOpponentScore, outcome: 'eliminated' });
+                        handleFinishGame({ score, opScore: localOpponentScore, outcome: 'eliminated' });
                     }, 500);
                 }
                 return newLives;
@@ -187,11 +201,12 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
             setCurrentIndex(nextIndex);
 
             if (nextIndex >= questions.length) {
-                onFinish({ score: score + basePoints + streakBonus, opScore: localOpponentScore });
+                handleFinishGame({ score: score + basePoints + streakBonus, opScore: localOpponentScore });
             }
         }, 1000);
     };
 
+    if (isFinished) return <div className="card fade-in">Oyun Bitti! Yönlendiriliyor...</div>;
     if (!currentQuestion) return <div>Yükleniyor...</div>;
 
     return (
