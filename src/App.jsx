@@ -295,6 +295,7 @@ function App() {
         <Results
           score={finalScore}
           opponentScore={opponentScore}
+          opponentName={gameData?.players ? Object.values(gameData.players).find(p => p.name !== userData.name)?.name : 'Rakip'}
           onPlayAgain={() => {
             if (gameData && gameData.isTournamentMatch) {
               setGameState('tournament');

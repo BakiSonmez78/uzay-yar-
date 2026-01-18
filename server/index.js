@@ -358,7 +358,7 @@ const startBotLoop = (roomId, difficulty = 'medium') => {
     const difficultySettings = {
         easy: { minTime: 10000, maxTime: 20000, accuracy: 0.40 },
         medium: { minTime: 7000, maxTime: 15000, accuracy: 0.55 },
-        hard: { minTime: 4000, maxTime: 10000, accuracy: 0.70 }
+        hard: { minTime: 2000, maxTime: 6000, accuracy: 0.85 }
     };
 
     const settings = difficultySettings[difficulty] || difficultySettings.medium;
