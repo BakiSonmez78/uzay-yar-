@@ -1,45 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { soundManager } from '../utils/soundManager';
-import introVideo from '../assets/intro.mp4';
+import React, { useEffect } from 'react';
 
 export default function Welcome({ onStart }) {
-  const [introStep, setIntroStep] = useState('logo');
-  const [, forceUpdate] = useState(0);
 
-  const finishIntro = () => {
-    try {
-      soundManager.stopBeachAmbience();
-    } catch (e) {
-      console.warn("Sound stop failed", e);
-    }
-    console.log("Welcome: Intro finished. Transitioning to login...");
-    if (onStart) onStart();
-  };
-
-  // Sequence Timer
+  // Auto-advance after 4 seconds
   useEffect(() => {
-    // Start beach ambience when logo appears
-    try {
-      soundManager.playBeachAmbience();
-    } catch (e) {
-      console.warn("Sound play failed", e);
-    }
+    console.log("Welcome component mounted. Timer starting...");
+    const timer = setTimeout(() => {
+      console.log("Welcome timer finished. Auto-advancing...");
+      if (onStart) onStart();
+    }, 4000);
 
-    // Logo Phase (3 seconds now, faster)
-    const logoTimer = setTimeout(() => {
-      finishIntro();
-    }, 3000);
-
-    return () => {
-      clearTimeout(logoTimer);
-      try { soundManager.stopBeachAmbience(); } catch (e) { }
-    };
+    return () => clearTimeout(timer);
   }, [onStart]);
 
   return (
     <div
       className="card fade-in"
-      onClick={finishIntro} // Click to skip
+      onClick={() => { console.log("Welcome clicked. Skipping..."); if (onStart) onStart(); }}
       style={{
         textAlign: 'center',
         padding: '0',
@@ -51,23 +28,25 @@ export default function Welcome({ onStart }) {
         position: 'relative',
         overflow: 'hidden',
         background: 'black',
-        cursor: 'pointer' // Show it's clickable
-      }}>
+        cursor: 'pointer'
+      }}
+    >
+      {/* BACKGROUND CLICK HINT */}
+      <div style={{ position: 'absolute', bottom: '20px', color: '#666', fontSize: '0.8rem', zIndex: 20 }}>
+        (Geçmek için tıklayın)
+      </div>
 
-      {/* 1. YAZ GAMES LOGO OVERLAY */}
+      {/* 1. YAZ GAMES LOGO & SCENE */}
       <div style={{
         position: 'absolute',
         top: 0,
         left: 0,
         width: '100%',
         height: '100%',
-        background: 'black',
-        zIndex: 10,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        opacity: 1,
         pointerEvents: 'none',
       }}>
         {/* Animated Text */}
