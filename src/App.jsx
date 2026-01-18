@@ -216,7 +216,11 @@ function App() {
       }
     }
 
-    setGameState('results');
+    if (gameData && gameData.isTournamentMatch) {
+      setGameState('tournament');
+    } else {
+      setGameState('results');
+    }
   };
 
   const handleEnterGame = () => {

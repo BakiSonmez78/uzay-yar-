@@ -104,10 +104,8 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
             // Logic: If the eliminated player is NOT me, then I won!
             if (eliminatedId !== playerId) {
                 setIsFinished(true);
-                setTimeout(() => {
-                    alert("Rakip 5 hata yaptı ve elendi! Kazandın! 🏆");
-                    handleFinishGame({ score: score + 100, opScore: 0, outcome: 'opponent_eliminated' }); // Bonus for survival
-                }, 500);
+                // Opponent eliminated, I win
+                handleFinishGame({ score: score + 100, opScore: localOpponentScore, outcome: 'opponent_eliminated' });
             }
         });
 
@@ -115,9 +113,8 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
             if (isFinished) return;
             if (winnerId === playerId) {
                 // Opponent left, we win!
-                setFeedback('correct'); // Just a visual cue
-                alert("Rakip oyundan ayrıldı! Kazandın! 🏆");
-                handleFinishGame({ score: score + 50, opScore: 0, outcome: 'opponent_disconnected' }); // Bonus points and outcome
+                setFeedback('correct');
+                handleFinishGame({ score: score + 50, opScore: localOpponentScore, outcome: 'opponent_disconnected' });
             }
         });
 
