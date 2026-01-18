@@ -25,20 +25,23 @@ const getApiUrl = () => {
   return 'https://uzay-yarisi-backend.onrender.com';
 };
 
-// Initialize socket ONCE outside component - CRITICAL for stability
-const socket = io(getApiUrl(), {
-  transports: ['polling', 'websocket'], // Polling first, then upgrade
-  withCredentials: true,
-  autoConnect: true,
-  reconnection: true,
-  reconnectionAttempts: 10,
-  reconnectionDelay: 1000,
-  reconnectionDelayMax: 5000,
-  timeout: 20000
-});
+// Initialize socket lazily
+let socket;
 
-// Helper function to get socket instance
-const getSocket = () => socket;
+const getSocket = () => {
+  if (!socket) {
+    socket = io(getApiUrl(), {
+      transports: ['polling', 'websocket'], // Polling first, then upgrade
+      withCredentials: true,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000
+    });
+  }
+  return socket;
+};
 
 function App() {
   const [gameState, setGameState] = useState('login'); // login, menu, lobby, matchmaking, playing, results
