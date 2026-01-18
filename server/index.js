@@ -43,7 +43,7 @@ app.get('/health', (req, res) => {
 
 // Root endpoint
 app.get('/', (req, res) => {
-    res.send('Uzay Yarışı Backend v1.1.1 - Opponent Lives Sync Fixed');
+    res.send('Uzay Yarışı Backend v1.1.2 - Elimination Logic Fixed');
 });
 
 const io = new Server(server, {
@@ -397,20 +397,19 @@ io.on('connection', (socket) => {
         const game = games[roomId];
         if (game) {
             console.log(`[player_eliminated] Player ${playerId} eliminated in room ${roomId}`);
-            // Broadcast to EVERYONE in the room (including the eliminated player, though they handled it locally)
-            // But specifically, the OTHER player needs to know they won.
-
-            // We emit 'opponent_eliminated' with the ID of the ELIMINATED player,
-            // OR the ID of the WINNER.
-            // Let's stick to notifying the winner.
 
             // Find the OTHER player (the winner)
-            const winner = game.players.find(p => p.uid !== playerId && p.socketId !== socket.id);
+            // Just looking for the player who is NOT the eliminated one is safer for 2-player games
+            const winner = game.players.find(p => p.uid !== playerId);
+
             if (winner) {
-                // Tell the winner they won because opponent was eliminated
-                // We send 'opponent_eliminated' and pass winnerId = winner.uid
-                io.to(roomId).emit('opponent_eliminated', { winnerId: winner.uid });
-                console.log(`[player_eliminated] Declared ${winner.uid} as winner due to opponent elimination`);
+                io.to(roomId).emit('opponent_eliminated', {
+                    winnerId: winner.uid,
+                    eliminatedId: playerId
+                });
+                console.log(`[player_eliminated] Declared ${winner.uid} as winner (Opponent: ${playerId})`);
+            } else {
+                console.warn(`[player_eliminated] Could not find winner in room ${roomId}. Players:`, game.players.map(p => p.uid));
             }
         }
     });

@@ -87,8 +87,11 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
             }
         });
 
-        socket.on('opponent_eliminated', ({ winnerId }) => {
-            if (winnerId === playerId) {
+        socket.on('opponent_eliminated', ({ winnerId, eliminatedId }) => {
+            console.log('[Game] opponent_eliminated received:', { winnerId, eliminatedId, myId: playerId });
+
+            // Logic: If the eliminated player is NOT me, then I won!
+            if (eliminatedId !== playerId) {
                 setTimeout(() => {
                     alert("Rakip 5 hata yaptı ve elendi! Kazandın! 🏆");
                     onFinish({ score: score + 100, opScore: 0, outcome: 'opponent_eliminated' }); // Bonus for survival
