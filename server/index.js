@@ -621,22 +621,42 @@ io.on('connection', (socket) => {
         socket.join(tournamentId);
 
         socket.emit('tournament_created', tournament);
-        io.emit('tournament_list_update', Object.values(tournaments).filter(t => t.status === 'waiting'));
 
-        console.log(`[Tournament] Created: ${tournamentId} by ${creator.name}`);
+        // Broadcast to EVERYONE that a new tournament is available
+        const currentList = Object.values(tournaments).filter(t => t.status === 'waiting');
+        io.emit('tournament_list_update', currentList);
+
+        console.log(`[Tournament] Created: ${tournamentId} by ${creator.name}. Total active: ${currentList.length}`);
     });
 
     socket.on('get_tournaments', () => {
         const availableTournaments = Object.values(tournaments).filter(t => t.status === 'waiting');
         socket.emit('tournament_list_update', availableTournaments);
+        console.log(`[Tournament] Sent list to ${socket.id}. Count: ${availableTournaments.length}`);
     });
 
     socket.on('request_join_tournament', ({ tournamentId, player }) => {
         const tournament = tournaments[tournamentId];
 
-        if (!tournament || tournament.status !== 'waiting') return;
-        if (tournament.players.some(p => p.uid === player.uid)) return;
-        if (tournament.pendingRequests.some(r => r.player.uid === player.uid)) return;
+        if (!tournament) {
+            console.log(`[Tournament] Join failed: ${tournamentId} not found`);
+            return;
+        }
+
+        if (tournament.status !== 'waiting') {
+            console.log(`[Tournament] Join failed: ${tournamentId} status is ${tournament.status}`);
+            return;
+        }
+
+        if (tournament.players.some(p => p.uid === player.uid)) {
+            console.log(`[Tournament] Player ${player.name} already in ${tournamentId}`);
+            return;
+        }
+
+        if (tournament.pendingRequests.some(r => r.player.uid === player.uid)) {
+            console.log(`[Tournament] Player ${player.name} already has pending request for ${tournamentId}`);
+            return;
+        }
 
         tournament.pendingRequests.push({ player: player, requestedAt: Date.now() });
 
@@ -646,8 +666,10 @@ io.on('connection', (socket) => {
         socket.emit('join_request_sent', { tournamentId });
         io.to(tournamentId).emit('tournament_update', tournament);
 
-        console.log(`[Tournament] ${player.name} requested to join ${tournamentId}`);
-        console.log(`[Tournament] Emitted join_request_sent to player`);
+        console.log(`[Tournament] ${player.name} requested to join ${tournamentId}. Pending: ${tournament.pendingRequests.length}`);
+
+        // Also update the public list because participants count might be shown
+        io.emit('tournament_list_update', Object.values(tournaments).filter(t => t.status === 'waiting'));
     });
 
     socket.on('approve_join_request', ({ tournamentId, playerUid }) => {

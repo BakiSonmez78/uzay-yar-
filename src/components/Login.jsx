@@ -68,8 +68,20 @@ export default function Login({ onLoginSuccess }) {
             textAlign: 'center',
             padding: '3rem'
         }}>
-            <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>🚀</h1>
-            <h2 style={{ marginBottom: '0.5rem' }}>Matematik Uzay Yarışı</h2>
+            <h1 style={{
+                fontSize: '4rem',
+                marginBottom: '0.5rem',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                fontWeight: 'bold'
+            }}>
+                YAZ GAMES
+            </h1>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Matematik Uzay Yarışı</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.8rem' }}>
+                Versiyon: 1.0.5
+            </p>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '3rem' }}>
                 Giriş yaparak maceraya başla!
             </p>
