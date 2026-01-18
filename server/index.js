@@ -970,6 +970,31 @@ io.on('connection', (socket) => {
         socket.emit('match_found', game);
         console.log(`[Match] Player joined room ${roomId}`);
     });
+
+    socket.on('rejoin_tournament', ({ uid }) => {
+        // Find if user is in any active tournament
+        const activeTournament = Object.values(tournaments).find(t => 
+            (t.status === 'waiting' || t.status === 'in_progress') && 
+            t.players.some(p => p.uid === uid)
+        );
+
+        if (activeTournament) {
+            console.log(`[Tournament] Player ${uid} rejoining tournament ${activeTournament.id}`);
+            
+            // Re-join socket room
+            socket.join(activeTournament.id);
+            
+            // Update socketId record
+            const player = activeTournament.players.find(p => p.uid === uid);
+            if (player) player.socketId = socket.id;
+
+            // Send full details
+            socket.emit('tournament_rejoined', { tournament: activeTournament });
+        } else {
+            console.log(`[Tournament] Rejoin failed. No active tournament found for ${uid}`);
+            socket.emit('tournament_rejoined', { tournament: null });
+        }
+    });
 });
 
 const PORT = process.env.PORT || 3001;

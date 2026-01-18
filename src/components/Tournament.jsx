@@ -13,9 +13,44 @@ export default function Tournament({ socket, userData, onBack }) {
         // Get available tournaments
         socket.emit('get_tournaments');
 
+        // Try to rejoin any active tournament
+        if (userData?.uid) {
+            socket.emit('rejoin_tournament', { uid: userData.uid });
+        }
+
         const onListUpdate = (tournaments) => {
             console.log('[Tournament] List update received:', tournaments);
             setAvailableTournaments(tournaments);
+        };
+
+        const onRejoined = ({ tournament }) => {
+            if (tournament) {
+                console.log('[Tournament] Rejoined active tournament:', tournament);
+                setCurrentTournament(tournament);
+                setIsCreator(tournament.creator.uid === userData.uid);
+                setView('waiting'); // Shows lobby or bracket depending on status
+
+                // If match is already in progress (e.g. reload during game), auto-join
+                if (tournament.status === 'in_progress' && tournament.bracket) {
+                    const myMatch = tournament.bracket.find(m =>
+                        m.status === 'scheduled' && // Actually if in_progress on server, status here might be scheduled initially? 
+                        // No, server sends updated bracket
+                        m.playersList.some(p => p.uid === userData.uid) &&
+                        !m.winner
+                    );
+
+                    // If server says 'scheduled' or 'in_progress' (we don't persist in_progress status on bracket match explicitly in all cases, 
+                    // but we do in startTournament it sets status='scheduled'. 
+                    // Wait, server code sets status='scheduled' initially.
+
+                    if (myMatch) {
+                        // Auto join ONLY if we are sure? Or user can wait.
+                        // Let's auto-join to be safe.
+                        console.log('[Tournament] Auto-joining pending match after rejoin:', myMatch.roomId);
+                        socket.emit('join_match', { roomId: myMatch.roomId });
+                    }
+                }
+            }
         };
 
         const onCreated = (tournament) => {
@@ -105,6 +140,7 @@ export default function Tournament({ socket, userData, onBack }) {
             // Maybe show confetti or specialized winner view
         };
 
+        socket.on('tournament_rejoined', onRejoined);
         socket.on('tournament_list_update', onListUpdate);
         socket.on('tournament_created', onCreated);
         socket.on('tournament_joined_success', onJoinedSuccess);
@@ -116,6 +152,7 @@ export default function Tournament({ socket, userData, onBack }) {
 
         return () => {
             console.log('[Tournament] useEffect cleanup');
+            socket.off('tournament_rejoined', onRejoined);
             socket.off('tournament_list_update', onListUpdate);
             socket.off('tournament_created', onCreated);
             socket.off('tournament_joined_success', onJoinedSuccess);
