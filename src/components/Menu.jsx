@@ -270,6 +270,36 @@ export default function Menu({ userData, onStart, onShowLeaderboard, onShowTourn
                         💻 Bilgisayara Karşı
                     </button>
 
+                    {/* Share Button */}
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            const gameUrl = window.location.origin;
+                            navigator.clipboard.writeText(gameUrl).then(() => {
+                                alert('🎮 Oyun linki kopyalandı!\n\n' + gameUrl + '\n\nArkadaşlarınla paylaşabilirsin!');
+                            }).catch(() => {
+                                prompt('Oyun linkini kopyala:', gameUrl);
+                            });
+                        }}
+                        style={{
+                            width: '100%',
+                            padding: '1rem',
+                            fontSize: '1.2rem',
+                            fontWeight: 'bold',
+                            background: 'linear-gradient(to bottom, #a855f7, #7c3aed)',
+                            border: 'none',
+                            borderRadius: '15px',
+                            color: 'white',
+                            boxShadow: '0 4px 0 #6d28d9, 0 8px 15px rgba(0,0,0,0.2)',
+                            cursor: 'pointer',
+                            transition: 'transform 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
+                        onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+                    >
+                        🔗 Oyunu Paylaş
+                    </button>
+
                     {/* Tournament Button (Hidden) */}
                     {/*
                     <button
