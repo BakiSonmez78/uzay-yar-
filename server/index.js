@@ -718,18 +718,36 @@ io.on('connection', (socket) => {
         // Check active games
         Object.keys(games).forEach(roomId => {
             const game = games[roomId];
-            const disconnectedPlayer = game.players.find(p => p.socketId === socket.id);
+
+            // Helper to get players array regardless of structure
+            let playersArray = [];
+            if (Array.isArray(game.players)) {
+                playersArray = game.players;
+            } else if (game.playersList && Array.isArray(game.playersList)) {
+                playersArray = game.playersList;
+            } else if (typeof game.players === 'object') {
+                playersArray = Object.values(game.players);
+            }
+
+            const disconnectedPlayer = playersArray.find(p => p.socketId === socket.id);
 
             if (disconnectedPlayer) {
                 console.log(`Player ${disconnectedPlayer.name} disconnected from room ${roomId}`);
 
                 // Find opponent
-                const opponent = game.players.find(p => p.socketId !== socket.id);
+                const opponent = playersArray.find(p => p.socketId !== socket.id);
+
                 if (opponent && !opponent.isBot) {
                     console.log(`Notifying opponent ${opponent.name} (Socket: ${opponent.socketId})`);
                     io.to(opponent.socketId).emit('opponent_disconnected', {
-                        winnerId: opponent.playerId
+                        winnerId: opponent.uid || opponent.playerId
                     });
+                }
+
+                // Tournament Specific Logic: Handle forfeit
+                if (game.isTournamentMatch && opponent) {
+                    console.log(`[Tournament] Match forfeit. Winner: ${opponent.name}`);
+                    handleTournamentMatchEnd(game, opponent.uid);
                 }
 
                 // End game

@@ -183,13 +183,13 @@ function App() {
         currentSocket.emit('game_over', { roomId: gameData.roomId, score: myScore });
 
         // Tournament Logic: If I won based on scores, tell server to advance me
+        // Tournament Logic: If I won based on scores, tell server to advance me
         if (gameData?.isTournamentMatch) {
           const isWinner = myScore > opScore;
-          // Also win if opponent outcome was 'eliminated' (which we know from outcome param)
-          // But outcome param handles elimination case via 'opponent_eliminated' event separately usually.
-          // Here we handle Score Win.
-          if (isWinner) {
-            console.log("[App] Claiming tournament match win via score");
+          const explicitWin = outcome === 'opponent_eliminated' || outcome === 'opponent_disconnected';
+
+          if (isWinner || explicitWin) {
+            console.log("[App] Claiming tournament match win via score or forfeit");
             // Use stable ID if available, else uid
             const myId = playerIdRef.current || userData.uid;
             currentSocket.emit('tournament_match_over', { roomId: gameData.roomId, winnerId: myId });

@@ -117,7 +117,7 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
                 // Opponent left, we win!
                 setFeedback('correct'); // Just a visual cue
                 alert("Rakip oyundan ayrıldı! Kazandın! 🏆");
-                handleFinishGame({ score: score + 50, opScore: 0 }); // Bonus points for "technical KO"
+                handleFinishGame({ score: score + 50, opScore: 0, outcome: 'opponent_disconnected' }); // Bonus points and outcome
             }
         });
 
