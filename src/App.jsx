@@ -119,9 +119,9 @@ function App() {
     };
   }, []);
 
-  const handleStart = (name, avatar) => {
+  const handleStart = (name, avatar, school) => {
     // Keep user data from login, just update if needed
-    setUserData(prev => ({ ...prev, name: name || prev.name, avatar: avatar || prev.avatar }));
+    setUserData(prev => ({ ...prev, name: name || prev.name, avatar: avatar || prev.avatar, school: school || prev.school }));
     setGameState('lobby');
   };
 
@@ -179,6 +179,7 @@ function App() {
           score: myScore,
           country: myCountry || 'TR',
           avatar: userData.avatar,
+          school: userData.school || '',
           date: Date.now()
         });
         console.log("Score saved to Firestore!");

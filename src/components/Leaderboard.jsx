@@ -50,31 +50,18 @@ export default function Leaderboard({ onBack }) {
                 </button>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
-                {tabs.map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={activeTab === tab.id ? 'primary' : 'secondary'}
-                        style={{ flex: 1, fontSize: '0.9rem' }}
-                    >
-                        {tab.label}
-                    </button>
-                ))}
-            </div>
-
             <div style={{ minHeight: '300px' }}>
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
                         Yükleniyor...
                     </div>
-                ) : data[activeTab].length === 0 ? (
+                ) : scores.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
                         Henüz veri yok. İlk şampiyon sen ol!
                     </div>
                 ) : (
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                        {data[activeTab].map((player, index) => (
+                        {scores.map((player, index) => (
                             <li key={index} style={{
                                 display: 'flex',
                                 alignItems: 'center',

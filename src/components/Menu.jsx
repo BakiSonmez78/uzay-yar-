@@ -10,6 +10,7 @@ export default function Menu({ userData, onStart, onShowLeaderboard, onShowTourn
     const [name, setName] = useState(userData?.name || '');
     const [selectedAvatar, setSelectedAvatar] = useState(userData?.avatar || '🐶');
     const [showAvatars, setShowAvatars] = useState(false);
+    const [school, setSchool] = useState(userData?.school || '');
     const [, forceUpdate] = useState(0);
 
     const AVATARS = ['🐶', '🐱', '🦁', '🐯', '🐻', '🐼', '🐨', '🐸', '🦄', '🐲'];
@@ -21,7 +22,7 @@ export default function Menu({ userData, onStart, onShowLeaderboard, onShowTourn
     const handleStart = (e) => {
         e.preventDefault();
         if (name.trim()) {
-            onStart(name, selectedAvatar);
+            onStart(name, selectedAvatar, school);
         }
     };
 
@@ -171,6 +172,26 @@ export default function Menu({ userData, onStart, onShowLeaderboard, onShowTourn
                             ✏️
                         </button>
                     </div>
+                </div>
+
+                {/* School Field (Optional) */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <input
+                        type="text"
+                        value={school}
+                        onChange={(e) => setSchool(e.target.value)}
+                        placeholder="Okul (opsiyonel)"
+                        style={{
+                            width: '100%',
+                            background: 'rgba(255,255,255,0.1)',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            height: '50px',
+                            borderRadius: '15px',
+                            padding: '0 1rem',
+                            fontSize: '1rem',
+                            color: 'white'
+                        }}
+                    />
                 </div>
 
                 {/* Avatar Slider (Expandable) */}
