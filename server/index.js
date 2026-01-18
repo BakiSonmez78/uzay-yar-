@@ -386,10 +386,10 @@ const startBotLoop = (roomId, difficulty = 'medium') => {
                     // Bot uses fixed ID 'bot-1'
                     handleAnswer(roomId, 'bot-1', liveGame.currentIndex, q.answer);
                 }
-            } else {
-                // Bot checks wrong
-                nextBotTurn();
             }
+            // Whether correct or wrong, bot waits before next attempt
+            // This prevents bot from speeding up when making mistakes
+            nextBotTurn();
         }, reactionTime);
     };
 
