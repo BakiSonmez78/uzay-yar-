@@ -3,7 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 
-// Version 1.0.6 - Tournament system improvements
+// Version 1.0.7 - Fixed pendingRequests bug
 const app = express();
 app.use(cors());
 
