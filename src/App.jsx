@@ -44,7 +44,7 @@ const getSocket = () => {
 };
 
 function App() {
-  const [gameState, setGameState] = useState('welcome'); // Start with Welcome screen
+  const [gameState, setGameState] = useState('login'); // Reverted to login for stability
   const [lobbyMode, setLobbyMode] = useState('human'); // 'human' or 'bot'
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState({ name: '', avatar: '', uid: '', isGuest: false, school: '' });
