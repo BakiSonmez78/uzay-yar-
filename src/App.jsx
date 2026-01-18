@@ -142,16 +142,24 @@ function App() {
   };
 
   const handleSelectMode = (mode, matchType, botDifficulty = 'medium') => {
+    console.log('[Matchmaking] handleSelectMode called:', { mode, matchType, botDifficulty });
+    console.log('[Matchmaking] Socket connected:', socket.connected);
+    console.log('[Matchmaking] User data:', userData);
+
     setGameMode(mode);
     setGameState('matchmaking');
-    getSocket().emit('join_queue', {
+
+    const queueData = {
       name: userData.name,
       avatar: userData.avatar,
       mode,
       matchType,
       botDifficulty,
       playerId: playerIdRef.current // Send Stable ID
-    });
+    };
+
+    console.log('[Matchmaking] Emitting join_queue:', queueData);
+    getSocket().emit('join_queue', queueData);
   };
 
   const handleFinish = async (result) => {
