@@ -104,7 +104,16 @@ function App() {
       }
     });
 
+    // Keep-alive ping to prevent Render.com cold starts
+    const keepAliveInterval = setInterval(() => {
+      fetch(getApiUrl() + '/health')
+        .then(res => res.json())
+        .then(data => console.log('[KeepAlive] Backend health:', data.status))
+        .catch(err => console.warn('[KeepAlive] Ping failed:', err.message));
+    }, 5 * 60 * 1000); // Every 5 minutes
+
     return () => {
+      clearInterval(keepAliveInterval);
       socket.off('connect');
       socket.off('disconnect');
       socket.off('match_found');

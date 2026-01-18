@@ -29,11 +29,32 @@ const getCountryCode = async (ip) => {
 };
 
 const server = http.createServer(app);
+
+// Health check endpoint to prevent cold starts
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'ok',
+        uptime: process.uptime(),
+        timestamp: Date.now(),
+        activeTournaments: Object.keys(tournaments).length,
+        activeGames: Object.keys(games).length
+    });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+    res.send('Uzay Yarışı Backend v1.0.6 - Active');
+});
+
 const io = new Server(server, {
     cors: {
         origin: "*", // Allow all for dev
         methods: ["GET", "POST"]
-    }
+    },
+    pingTimeout: 60000,
+    pingInterval: 25000,
+    upgradeTimeout: 30000,
+    transports: ['websocket', 'polling']
 });
 
 // Game State Storage
