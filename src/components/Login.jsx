@@ -36,11 +36,14 @@ export default function Login({ onLoginSuccess }) {
             const result = await signInAnonymously(auth);
             const user = result.user;
 
-            // Generate unique guest number from uid using simple hash
+            // Generate unique guest number using timestamp + uid
+            const timestamp = Date.now();
+            const combined = user.uid + timestamp.toString();
+
             let hash = 0;
-            for (let i = 0; i < user.uid.length; i++) {
-                hash = ((hash << 5) - hash) + user.uid.charCodeAt(i);
-                hash = hash & hash; // Convert to 32bit integer
+            for (let i = 0; i < combined.length; i++) {
+                hash = ((hash << 5) - hash) + combined.charCodeAt(i);
+                hash = hash & hash;
             }
             const guestNumber = Math.abs(hash) % 10000;
             const avatars = ['🚀', '🌟', '⚡', '🎯', '🏆', '💫', '🔥', '⭐'];
@@ -48,7 +51,7 @@ export default function Login({ onLoginSuccess }) {
             onLoginSuccess({
                 name: `Guest #${guestNumber}`,
                 avatar: avatars[Math.abs(hash) % avatars.length],
-                uid: user.uid,
+                uid: user.uid + '_' + timestamp, // Make UID unique per session
                 isGuest: true
             });
         } catch (err) {
