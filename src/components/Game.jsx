@@ -74,36 +74,26 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
                 setLocalOpponentScore(newScores[opponentId]);
             }
 
-            // Visual feedback
-            if (winnerId === playerId) {
-                setFeedback('correct');
-                soundManager.playCorrect();
+            // Visual feedback - ONLY if it wasn't me who solved it
+            // Since we do optimistic updates, we don't need to do anything for our own solve here EXCEPT sync the score
+            // to the server's truth.
 
-                // Use server-provided streak if available, else fallback
-                if (typeof streak !== 'undefined') {
-                    setStreak(streak);
-                    if (bonus > 0) {
-                        setBonusPoints(bonus);
-                        setTimeout(() => setBonusPoints(0), 1500); // Hide bonus after animation
-                    }
-                } else {
-                    setStreak(s => s + 1);
-                }
+            const myId = playerId;
 
-            } else {
-                setFeedback('opponent-won'); // New feedback type
-                soundManager.playWrong(); // Or different sound?
-                setStreak(0);
+            // Sync final scores from server to be sure
+            if (newScores[myId] !== undefined) {
+                // Optional: We could force setScore(newScores[myId]) here, but it might cause jumpy UI if laggy.
+                // Better to trust optimistic unless huge drift.
             }
+        });
 
-            // Move to next question after delay
-            setTimeout(() => {
-                setFeedback(null);
-                setCurrentIndex(nextIndex);
-                if (nextIndex >= questions.length) {
-                    onFinish({ score: newScores[playerId], opScore: opponentId ? newScores[opponentId] : 0 });
-                }
-            }, 1500);
+        socket.on('opponent_eliminated', ({ winnerId }) => {
+            if (winnerId === playerId) {
+                setTimeout(() => {
+                    alert("Rakip 5 hata yaptı ve elendi! Kazandın! 🏆");
+                    onFinish({ score: score + 100, opScore: 0 }); // Bonus for survival
+                }, 500);
+            }
         });
 
         socket.on('opponent_disconnected', ({ winnerId }) => {
@@ -118,6 +108,7 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
         return () => {
             socket.off('question_solved');
             socket.off('opponent_disconnected');
+            socket.off('opponent_eliminated');
         };
     }, [socket, questions.length, onFinish, playerId, score]);
 
@@ -142,7 +133,9 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
                 if (newLives <= 0) {
                     // Game over - eliminated
                     setTimeout(() => {
-                        alert('5 hata yaptın! Elend in! 💔');
+                        // Notify server about elimination
+                        socket.emit('player_eliminated', { roomId, playerId });
+                        alert('5 hata yaptın! Elendin! 💔');
                         onFinish({ score, opScore: localOpponentScore });
                     }, 500);
                 }
@@ -156,13 +149,39 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
             return;
         }
 
-        // Emit attempt to server
+        // Optimistic Success: Assume we are right immediately!
+        setFeedback('correct');
+        soundManager.playCorrect();
+
+        // Calculate optimistic score update (visual only)
+        const basePoints = 10;
+        const streakBonus = streak >= 2 ? (streak * 2) : 0;
+        setBonusPoints(streakBonus);
+        setScore(prev => prev + basePoints + streakBonus);
+        setStreak(prev => prev + 1);
+
+        // Emit to server to sync and allow validation
         socket.emit('solve_question', {
             roomId,
-            playerId, // Explicitly identifying who solved it
+            playerId,
             index: currentIndex,
             answer: selected
         });
+
+        // Automatically move to next question after delay
+        // We do NOT wait for server 'question_solved' for visual transition anymore
+        // However, we still listen to it to sync accurate scores
+        setTimeout(() => {
+            setFeedback(null);
+            setBonusPoints(0);
+
+            const nextIndex = currentIndex + 1;
+            setCurrentIndex(nextIndex);
+
+            if (nextIndex >= questions.length) {
+                onFinish({ score: score + basePoints + streakBonus, opScore: localOpponentScore });
+            }
+        }, 1000);
     };
 
     if (!currentQuestion) return <div>Yükleniyor...</div>;

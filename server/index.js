@@ -43,7 +43,7 @@ app.get('/health', (req, res) => {
 
 // Root endpoint
 app.get('/', (req, res) => {
-    res.send('Uzay Yarışı Backend v1.0.9 - CORS Fixed');
+    res.send('Uzay Yarışı Backend v1.1.0 - Game Logic Fixed');
 });
 
 const io = new Server(server, {
@@ -387,6 +387,28 @@ io.on('connection', (socket) => {
             const stableId = playerId || socket.id;
             console.log(`[wrong_answer] Resetting streak for player ${stableId} in room ${roomId}`);
             game.streaks[stableId] = 0;
+        }
+    });
+
+    socket.on('player_eliminated', ({ roomId, playerId }) => {
+        const game = games[roomId];
+        if (game) {
+            console.log(`[player_eliminated] Player ${playerId} eliminated in room ${roomId}`);
+            // Broadcast to EVERYONE in the room (including the eliminated player, though they handled it locally)
+            // But specifically, the OTHER player needs to know they won.
+
+            // We emit 'opponent_eliminated' with the ID of the ELIMINATED player,
+            // OR the ID of the WINNER.
+            // Let's stick to notifying the winner.
+
+            // Find the OTHER player (the winner)
+            const winner = game.players.find(p => p.uid !== playerId && p.socketId !== socket.id);
+            if (winner) {
+                // Tell the winner they won because opponent was eliminated
+                // We send 'opponent_eliminated' and pass winnerId = winner.uid
+                io.to(roomId).emit('opponent_eliminated', { winnerId: winner.uid });
+                console.log(`[player_eliminated] Declared ${winner.uid} as winner due to opponent elimination`);
+            }
         }
     });
 
