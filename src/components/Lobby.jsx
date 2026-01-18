@@ -1,7 +1,7 @@
 import React from 'react';
 import { soundManager } from '../utils/soundManager';
 
-export default function Lobby({ name, avatar, onSelectMode, initialOpponentType = 'human' }) {
+export default function Lobby({ name, avatar, onSelectMode, initialOpponentType = 'human', onBack }) {
     const [opponentType, setOpponentType] = React.useState(initialOpponentType); // 'human' or 'bot'
     const [botDifficulty, setBotDifficulty] = React.useState('medium'); // 'easy', 'medium', 'hard'
     const [, forceUpdate] = React.useState(0); // For re-rendering when sound settings change
@@ -116,7 +116,7 @@ export default function Lobby({ name, avatar, onSelectMode, initialOpponentType 
 
             {/* Back Button */}
             <button
-                onClick={() => window.location.reload()}
+                onClick={onBack || (() => window.location.reload())}
                 className="secondary"
                 style={{
                     marginTop: '2rem',

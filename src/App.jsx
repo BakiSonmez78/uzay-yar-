@@ -264,6 +264,7 @@ function App() {
           avatar={userData.avatar}
           onSelectMode={handleSelectMode}
           initialOpponentType={lobbyMode}
+          onBack={() => setGameState('menu')}
         />
       )}
 
