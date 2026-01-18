@@ -303,7 +303,7 @@ const handleTournamentMatchEnd = (game, winnerId) => {
 };
 
 // Start a Game Room
-const startGame = (roomId, mode, players, isBotGame = false) => {
+const startGame = (roomId, mode, players, isBotGame = false, botDifficulty = 'medium') => {
     const questions = generateQuestions(mode);
 
     // Initialize Game State
@@ -346,7 +346,7 @@ const startGame = (roomId, mode, players, isBotGame = false) => {
 
     // Bot Logic
     if (isBotGame) {
-        startBotLoop(roomId);
+        startBotLoop(roomId, botDifficulty);
     }
 };
 
@@ -356,9 +356,9 @@ const startBotLoop = (roomId, difficulty = 'medium') => {
 
     // Difficulty settings
     const difficultySettings = {
-        easy: { minTime: 4000, maxTime: 7000, accuracy: 0.60 },
-        medium: { minTime: 2500, maxTime: 5000, accuracy: 0.75 },
-        hard: { minTime: 1000, maxTime: 3000, accuracy: 0.90 }
+        easy: { minTime: 6000, maxTime: 12000, accuracy: 0.50 },
+        medium: { minTime: 4000, maxTime: 8000, accuracy: 0.65 },
+        hard: { minTime: 2000, maxTime: 5000, accuracy: 0.80 }
     };
 
     const settings = difficultySettings[difficulty] || difficultySettings.medium;
@@ -481,7 +481,7 @@ const handleAnswer = (roomId, playerId, questionIndex, answer) => {
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
 
-    socket.on('join_queue', async ({ name, avatar, mode, matchType, playerId }) => {
+    socket.on('join_queue', async ({ name, avatar, mode, matchType, playerId, botDifficulty }) => {
         // Fallback for older clients or if playerId is missing
         const stableId = playerId || socket.id;
 
@@ -499,7 +499,7 @@ io.on('connection', (socket) => {
             startGame(roomId, mode, [
                 { id: socket.id, playerId: stableId, name, avatar, isBot: false, country },
                 { id: 'bot-1', playerId: 'bot-1', name: 'Robot 🤖', avatar: '🤖', isBot: true, country: 'TR' }
-            ], true);
+            ], true, botDifficulty || 'medium');
         } else {
             // Safety check
             if (!queues[mode]) {
