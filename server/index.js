@@ -43,12 +43,19 @@ app.get('/health', (req, res) => {
 
 // Root endpoint
 app.get('/', (req, res) => {
-    res.send('Uzay Yarışı Backend v1.0.8 - Polling First Strategy');
+    res.send('Uzay Yarışı Backend v1.0.9 - CORS Fixed');
 });
 
 const io = new Server(server, {
     cors: {
-        origin: "*", // Allow all origins
+        origin: [
+            "https://math-games-6c136.web.app",
+            "https://math-games-6c136.firebaseapp.com",
+            "http://localhost:5173",
+            "http://localhost:3000",
+            "http://127.0.0.1:5173",
+            "http://192.168.1.106:5173" // Local mobile testing
+        ],
         methods: ["GET", "POST"],
         credentials: true
     },
