@@ -35,7 +35,14 @@ export default function Results({ score, opponentScore, opponentName, onRestart 
             };
             frame();
         }
-    }, [isWinner]);
+
+        // Auto-return to menu after 5 seconds
+        const autoReturnTimer = setTimeout(() => {
+            onRestart();
+        }, 5000);
+
+        return () => clearTimeout(autoReturnTimer);
+    }, [isWinner, onRestart]);
 
     return (
         <div className={`card fade-in ${!isWinner && !isDraw ? 'sad-effect' : ''}`} style={{

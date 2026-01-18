@@ -20,21 +20,52 @@ export default function Tournament({ socket, userData, onBack }) {
             setView('waiting');
         });
 
-        socket.on('join_request_sent', () => {
-            setView('waiting');
+        socket.on('join_request_sent', ({ tournamentId }) => {
+            console.log('[Tournament] Join request sent for:', tournamentId);
+            console.log('[Tournament] Available tournaments:', availableTournaments);
+            // Find the tournament we just requested to join
+            const tournament = availableTournaments.find(t => t.id === tournamentId);
+            console.log('[Tournament] Found tournament:', tournament);
+            if (tournament) {
+                setCurrentTournament(tournament);
+                setIsCreator(false); // We're a participant, not creator
+                setView('waiting');
+                console.log('[Tournament] Switched to waiting view');
+            } else {
+                console.error('[Tournament] Could not find tournament in available list!');
+            }
         });
 
         socket.on('tournament_update', (tournament) => {
-            setCurrentTournament(tournament);
+            console.log('[Tournament] Received update:', tournament);
+            console.log('[Tournament] Current tournament:', currentTournament);
+            // Only update if we're in this tournament
+            if (currentTournament?.id === tournament.id) {
+                console.log('[Tournament] Updating current tournament');
+                setCurrentTournament(tournament);
+            }
             // Update available list too
             setAvailableTournaments(prev =>
                 prev.map(t => t.id === tournament.id ? tournament : t)
             );
         });
 
-        socket.on('tournament_started', (tournament) => {
-            alert(`Turnuva başlıyor! ${tournament.size} oyuncu hazır!`);
-            // TODO: Navigate to bracket/match
+        socket.on('tournament_started', (data) => {
+            console.log('[Tournament] Tournament started!', data);
+            const { tournament, firstRoundMatches } = data;
+
+            // Find my match
+            const myMatch = firstRoundMatches.find(match =>
+                match.players.some(p => p.uid === userData.uid)
+            );
+
+            if (myMatch) {
+                console.log('[Tournament] Found my match:', myMatch);
+                // Emit join_match to get game data
+                socket.emit('join_match', { roomId: myMatch.roomId });
+            } else {
+                alert('Turnuva başladı ama eşleşme bulunamadı!');
+            }
         });
 
         return () => {
@@ -44,7 +75,7 @@ export default function Tournament({ socket, userData, onBack }) {
             socket.off('tournament_update');
             socket.off('tournament_started');
         };
-    }, [socket, currentTournament]);
+    }, [socket, currentTournament, availableTournaments]);
 
     const handleCreateTournament = (size) => {
         socket.emit('create_tournament', {
@@ -58,6 +89,8 @@ export default function Tournament({ socket, userData, onBack }) {
     };
 
     const handleRequestJoin = (tournamentId) => {
+        console.log('[Tournament] handleRequestJoin called with:', tournamentId);
+        console.log('[Tournament] userData:', userData);
         socket.emit('request_join_tournament', {
             tournamentId,
             player: {
@@ -66,7 +99,8 @@ export default function Tournament({ socket, userData, onBack }) {
                 avatar: userData.avatar
             }
         });
-        setCurrentTournament(availableTournaments.find(t => t.id === tournamentId));
+        console.log('[Tournament] Emitted request_join_tournament event');
+        // Don't set currentTournament here - wait for join_request_sent event
     };
 
     const handleApprove = (playerUid) => {

@@ -36,13 +36,18 @@ export default function Login({ onLoginSuccess }) {
             const result = await signInAnonymously(auth);
             const user = result.user;
 
-            // Generate guest number from uid
-            const guestNumber = parseInt(user.uid.substring(0, 8), 36) % 10000;
+            // Generate unique guest number from uid using simple hash
+            let hash = 0;
+            for (let i = 0; i < user.uid.length; i++) {
+                hash = ((hash << 5) - hash) + user.uid.charCodeAt(i);
+                hash = hash & hash; // Convert to 32bit integer
+            }
+            const guestNumber = Math.abs(hash) % 10000;
             const avatars = ['🚀', '🌟', '⚡', '🎯', '🏆', '💫', '🔥', '⭐'];
 
             onLoginSuccess({
                 name: `Guest #${guestNumber}`,
-                avatar: avatars[Math.floor(Math.random() * avatars.length)],
+                avatar: avatars[Math.abs(hash) % avatars.length],
                 uid: user.uid,
                 isGuest: true
             });

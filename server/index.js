@@ -665,8 +665,56 @@ io.on('connection', (socket) => {
 
         if (tournament.players.length >= tournament.size) {
             tournament.status = 'in_progress';
-            io.to(tournamentId).emit('tournament_started', tournament);
-            console.log(`[Tournament] ${tournamentId} STARTED!`);
+
+            // Generate bracket (simple single elimination)
+            const shuffledPlayers = [...tournament.players].sort(() => Math.random() - 0.5);
+            tournament.bracket = [];
+
+            // Create first round matches
+            for (let i = 0; i < shuffledPlayers.length; i += 2) {
+                const player1 = shuffledPlayers[i];
+                const player2 = shuffledPlayers[i + 1];
+
+                const roomId = `tour_match_${tournamentId}_${i / 2}`;
+                const mode = '+'; // Default to addition for tournament
+
+                // Create game room
+                const game = {
+                    roomId: roomId,
+                    tournamentId: tournamentId,
+                    players: {
+                        [player1.uid]: player1,
+                        [player2.uid]: player2
+                    },
+                    questions: generateQuestions(mode, 10), // 10 questions per match
+                    currentIndex: 0,
+                    scores: {
+                        [player1.uid]: 0,
+                        [player2.uid]: 0
+                    },
+                    locked: false,
+                    startTime: Date.now(),
+                    duration: 60, // 60 seconds per match
+                    isTournamentMatch: true
+                };
+
+                games[roomId] = game;
+                tournament.bracket.push({
+                    round: 1,
+                    roomId: roomId,
+                    players: [player1, player2],
+                    winner: null
+                });
+
+                console.log(`[Tournament] Created match: ${player1.name} vs ${player2.name}`);
+            }
+
+            io.to(tournamentId).emit('tournament_started', {
+                tournament: tournament,
+                firstRoundMatches: tournament.bracket
+            });
+
+            console.log(`[Tournament] ${tournamentId} STARTED with ${tournament.bracket.length} matches!`);
         }
     });
 
@@ -679,6 +727,19 @@ io.on('connection', (socket) => {
             tournament.pendingRequests.splice(requestIndex, 1);
             io.to(tournamentId).emit('tournament_update', tournament);
         }
+    });
+
+    // Join a specific match (for tournaments)
+    socket.on('join_match', ({ roomId }) => {
+        const game = games[roomId];
+        if (!game) {
+            console.log(`[Match] Room ${roomId} not found`);
+            return;
+        }
+
+        socket.join(roomId);
+        socket.emit('match_found', game);
+        console.log(`[Match] Player joined room ${roomId}`);
     });
 });
 
