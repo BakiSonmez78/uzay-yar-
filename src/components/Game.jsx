@@ -8,6 +8,8 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
     const [streak, setStreak] = useState(0);
     const [feedback, setFeedback] = useState(null);
     const [bonusPoints, setBonusPoints] = useState(0); // For UI display
+    const [lives, setLives] = useState(5); // 5 lives system
+    const [opponentLives, setOpponentLives] = useState(5);
 
     const [localOpponentScore, setLocalOpponentScore] = useState(opponentScore || 0);
 
@@ -134,6 +136,19 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
             setFeedback('wrong');
             soundManager.playWrong();
 
+            // Deduct a life
+            setLives(prev => {
+                const newLives = prev - 1;
+                if (newLives <= 0) {
+                    // Game over - eliminated
+                    setTimeout(() => {
+                        alert('5 hata yaptın! Elend in! 💔');
+                        onFinish({ score, opScore: localOpponentScore });
+                    }, 500);
+                }
+                return newLives;
+            });
+
             // Notify server to reset streak
             socket.emit('wrong_answer', { roomId, playerId });
 
@@ -204,6 +219,14 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
                             🔥 {streak} Seri!
                         </div>
                     )}
+                    {/* Lives Display */}
+                    <div style={{ marginTop: '0.5rem', fontSize: '1.5rem' }}>
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <span key={i} style={{ opacity: i < lives ? 1 : 0.2 }}>
+                                ❤️
+                            </span>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Timer */}
@@ -227,6 +250,14 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
                         whiteSpace: 'nowrap'
                     }}>
                         {localOpponentScore}
+                    </div>
+                    {/* Opponent Lives Display */}
+                    <div style={{ marginTop: '0.5rem', fontSize: '1.5rem' }}>
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <span key={i} style={{ opacity: i < opponentLives ? 1 : 0.2 }}>
+                                ❤️
+                            </span>
+                        ))}
                     </div>
                 </div>
 

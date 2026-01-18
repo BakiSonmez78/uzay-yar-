@@ -41,9 +41,9 @@ const socket = io(getApiUrl(), {
 const getSocket = () => socket;
 
 function App() {
-  const [gameState, setGameState] = useState('welcome'); // welcome, login, menu, lobby, matchmaking, playing, results
+  const [gameState, setGameState] = useState('login'); // login, menu, lobby, matchmaking, playing, results
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userData, setUserData] = useState({ name: '', avatar: '', uid: '', isGuest: false });
+  const [userData, setUserData] = useState({ name: '', avatar: '', uid: '', isGuest: false, school: '' });
   const [gameMode, setGameMode] = useState(null);
   const [gameData, setGameData] = useState(null); // { roomId, questions, opponent, ... }
   const [finalScore, setFinalScore] = useState(0);
@@ -214,7 +214,6 @@ function App() {
 
   return (
     <div className="app-container">
-      {gameState === 'welcome' && <Welcome onStart={handleEnterGame} />}
       {gameState === 'login' && <Login onLoginSuccess={handleLoginSuccess} />}
       {gameState === 'menu' && <Menu userData={userData} onStart={handleStart} onShowLeaderboard={handleShowLeaderboard} onShowTournament={handleShowTournament} totalScore={userTotalScore} />}
 
