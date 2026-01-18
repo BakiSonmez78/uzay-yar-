@@ -368,13 +368,23 @@ const startBotLoop = (roomId, difficulty = 'medium') => {
         const currentGame = games[roomId];
         if (!currentGame) return; // Game over
 
+        const questionIndexAtStart = currentGame.currentIndex;
+
         // Determine bot reaction time based on difficulty
         const reactionTime = Math.random() * (settings.maxTime - settings.minTime) + settings.minTime;
 
         setTimeout(() => {
             const liveGame = games[roomId];
-            // Verify game state is still valid and index hasn't changed while waiting
+            // Verify game state is still valid
             if (!liveGame) return;
+
+            // CRITICAL: Check if question changed while bot was "thinking"
+            // If player solved it, or bot already solved it in another loop, stop this attempt
+            if (liveGame.currentIndex !== questionIndexAtStart) {
+                console.log(`[Bot] Question changed from ${questionIndexAtStart} to ${liveGame.currentIndex}, starting fresh`);
+                nextBotTurn(); // Start fresh on new question
+                return;
+            }
 
             // Bot attempts to solve CURRENT question
             const isCorrect = Math.random() < settings.accuracy;
@@ -385,10 +395,12 @@ const startBotLoop = (roomId, difficulty = 'medium') => {
                 if (q) {
                     // Bot uses fixed ID 'bot-1'
                     handleAnswer(roomId, 'bot-1', liveGame.currentIndex, q.answer);
+                    // After correct answer, handleAnswer will advance currentIndex
+                    // Next iteration will detect index change and start fresh
                 }
             }
-            // Whether correct or wrong, bot waits before next attempt
-            // This prevents bot from speeding up when making mistakes
+
+            // Try again (either after wrong answer, or after correct to handle next question)
             nextBotTurn();
         }, reactionTime);
     };
