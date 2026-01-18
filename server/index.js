@@ -43,7 +43,7 @@ app.get('/health', (req, res) => {
 
 // Root endpoint
 app.get('/', (req, res) => {
-    res.send('Uzay Yarışı Backend v1.1.0 - Game Logic Fixed');
+    res.send('Uzay Yarışı Backend v1.1.1 - Opponent Lives Sync Fixed');
 });
 
 const io = new Server(server, {
@@ -385,8 +385,11 @@ io.on('connection', (socket) => {
         const game = games[roomId];
         if (game && game.streaks) {
             const stableId = playerId || socket.id;
-            console.log(`[wrong_answer] Resetting streak for player ${stableId} in room ${roomId}`);
+            console.log(`[wrong_answer] Resetting streak and deducting life for player ${stableId} in room ${roomId}`);
             game.streaks[stableId] = 0;
+
+            // Broadcast to opponent so they can update their UI (reduce hearts)
+            socket.to(roomId).emit('opponent_wrong_answer', { playerId: stableId });
         }
     });
 

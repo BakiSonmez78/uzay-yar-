@@ -105,10 +105,15 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
             }
         });
 
+        socket.on('opponent_wrong_answer', () => {
+            setOpponentLives(prev => Math.max(0, prev - 1));
+        });
+
         return () => {
             socket.off('question_solved');
             socket.off('opponent_disconnected');
             socket.off('opponent_eliminated');
+            socket.off('opponent_wrong_answer');
         };
     }, [socket, questions.length, onFinish, playerId, score]);
 
