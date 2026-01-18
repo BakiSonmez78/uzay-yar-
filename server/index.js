@@ -43,7 +43,7 @@ app.get('/health', (req, res) => {
 
 // Root endpoint
 app.get('/', (req, res) => {
-    res.send('Uzay Yarışı Backend v1.1.3 - Instant Tournament Join');
+    res.send('Math Racing Backend v1.1.4 - Tournament Sync Fix');
 });
 
 const io = new Server(server, {
@@ -178,6 +178,7 @@ const startTournament = (tournamentId) => {
             playersList: [player1, player2],
             questions: generateQuestions(mode),
             streaks: { [player1.uid]: 0, [player2.uid]: 0 },
+            scores: { [player1.uid]: 0, [player2.uid]: 0 },
             isTournamentMatch: true,
             winner: null,
             startTime: Date.now(),
@@ -263,6 +264,7 @@ const handleTournamentMatchEnd = (game, winnerId) => {
                     playersList: [p1, p2], // Helper for bracket display if needed
                     questions: generateQuestions('+'),
                     streaks: { [p1.uid]: 0, [p2.uid]: 0 },
+                    scores: { [p1.uid]: 0, [p2.uid]: 0 },
                     isTournamentMatch: true,
                     winner: null,
                     startTime: Date.now(),
