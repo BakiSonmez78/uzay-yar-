@@ -140,6 +140,29 @@ export default function Tournament({ socket, userData, onBack }) {
             // Maybe show confetti or specialized winner view
         };
 
+        const onInfoReceived = (tournament) => {
+            if (tournament) {
+                setCurrentTournament(prev => {
+                    if (!prev || prev.id !== tournament.id) return prev; // Only update if same tournament
+
+                    // Check state transition from waiting/undefined to in_progress
+                    if (prev.status !== 'in_progress' && tournament.status === 'in_progress') {
+                        console.log('[Tournament] Polling detected start! Checking for matches...');
+                        if (tournament.bracket) {
+                            const myMatch = tournament.bracket.find(m =>
+                                m.status !== 'finished' && m.playersList.some(p => p.uid === userData.uid)
+                            );
+                            if (myMatch) {
+                                console.log('[Tournament] Auto-joining match found via poll:', myMatch.roomId);
+                                socket.emit('join_match', { roomId: myMatch.roomId });
+                            }
+                        }
+                    }
+                    return tournament;
+                });
+            }
+        };
+
         socket.on('tournament_rejoined', onRejoined);
         socket.on('tournament_list_update', onListUpdate);
         socket.on('tournament_created', onCreated);
@@ -149,6 +172,7 @@ export default function Tournament({ socket, userData, onBack }) {
         socket.on('tournament_bracket_update', onBracketUpdate);
         socket.on('tournament_round_update', onRoundUpdate);
         socket.on('tournament_finished', onFinished);
+        socket.on('tournament_info', onInfoReceived);
 
         return () => {
             console.log('[Tournament] useEffect cleanup');
@@ -161,8 +185,23 @@ export default function Tournament({ socket, userData, onBack }) {
             socket.off('tournament_bracket_update', onBracketUpdate);
             socket.off('tournament_round_update', onRoundUpdate);
             socket.off('tournament_finished', onFinished);
+            socket.off('tournament_info', onInfoReceived);
         };
     }, [socket, userData.uid]);
+
+    // Polling for tournament status (Fix for stuck players)
+    useEffect(() => {
+        let interval;
+        if (currentTournament && currentTournament.id && (currentTournament.status === 'waiting' || currentTournament.status === 'in_progress')) {
+            // console.log('[Tournament] Poll sending...'); // Too verbose
+            interval = setInterval(() => {
+                socket.emit('get_tournament_info', { tournamentId: currentTournament.id });
+            }, 3000);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [currentTournament?.id, currentTournament?.status, socket]);
 
     const handleCreateTournament = (size) => {
         socket.emit('create_tournament', {
@@ -416,44 +455,67 @@ export default function Tournament({ socket, userData, onBack }) {
         const isStarted = currentTournament.status === 'in_progress' || currentTournament.status === 'finished';
 
         const renderBracket = () => {
-            if (!currentTournament.bracket) return <div>Eşleşmeler hazırlanıyor...</div>;
+            let roundsToRender = {};
 
-            // Group by rounds
-            const rounds = {};
-            currentTournament.bracket.forEach(match => {
-                if (!rounds[match.round]) rounds[match.round] = [];
-                rounds[match.round].push(match);
-            });
+            // Use real bracket if available
+            if (currentTournament.bracket && currentTournament.bracket.length > 0) {
+                currentTournament.bracket.forEach(match => {
+                    if (!roundsToRender[match.round]) roundsToRender[match.round] = [];
+                    roundsToRender[match.round].push(match);
+                });
+            } else {
+                // Generate Placeholder Bracket Structure
+                const totalRounds = Math.log2(currentTournament.size);
+                for (let r = 1; r <= totalRounds; r++) {
+                    roundsToRender[r] = [];
+                    const matchesInRound = currentTournament.size / Math.pow(2, r);
+                    for (let m = 0; m < matchesInRound; m++) {
+                        roundsToRender[r].push({
+                            id: `placeholder_r${r}_m${m}`,
+                            round: r,
+                            status: 'pending',
+                            playersList: [{ name: '?' }, { name: '?' }]
+                        });
+                    }
+                }
+            }
 
             return (
-                <div className="bracket-container" style={{ display: 'flex', gap: '2rem', overflowX: 'auto', padding: '1rem' }}>
-                    {Object.keys(rounds).map(round => (
-                        <div key={round} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: '220px' }}>
-                            <h3 style={{ textAlign: 'center', color: '#fbbf24' }}>Tur {round}</h3>
-                            {rounds[round].map(match => (
-                                <div key={match.id} style={{
+                <div className="bracket-container" style={{ display: 'flex', gap: '2rem', overflowX: 'auto', padding: '1rem', justifyContent: 'center' }}>
+                    {Object.keys(roundsToRender).map(round => (
+                        <div key={round} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-around', gap: '1rem', minWidth: '220px' }}>
+                            <h3 style={{ textAlign: 'center', color: '#fbbf24', marginBottom: '0.5rem' }}>
+                                {round == Math.log2(currentTournament.size) ? '🏆 Final' : `${round}. Tur`}
+                            </h3>
+                            {roundsToRender[round].map((match, mIdx) => (
+                                <div key={match.id || mIdx} style={{
                                     padding: '1rem',
                                     background: 'rgba(255,255,255,0.1)',
                                     borderRadius: '10px',
                                     border: match.status === 'finished' ? '1px solid #4ade80' : '1px solid #666',
-                                    position: 'relative'
+                                    position: 'relative',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '0.5rem'
                                 }}>
                                     {match.playersList && match.playersList.map((p, idx) => (
                                         <div key={idx} style={{
                                             display: 'flex', alignItems: 'center', gap: '0.5rem',
-                                            opacity: match.winner && match.winner.uid !== p.uid ? 0.4 : 1,
-                                            marginTop: idx > 0 ? '0.5rem' : 0,
+                                            opacity: match.winner && match.winner.uid !== p.uid ? 0.4 : (p.name === '?' ? 0.3 : 1),
                                             fontWeight: match.winner && match.winner.uid === p.uid ? 'bold' : 'normal',
-                                            color: match.winner && match.winner.uid === p.uid ? '#4ade80' : 'white'
+                                            color: match.winner && match.winner.uid === p.uid ? '#4ade80' : 'white',
+                                            padding: '4px',
+                                            borderRadius: '4px',
+                                            background: p.uid === userData.uid ? 'rgba(59, 130, 246, 0.2)' : 'transparent'
                                         }}>
-                                            <span style={{ fontSize: '1.2rem' }}>{p.avatar}</span>
+                                            <span style={{ fontSize: '1.2rem' }}>{p.avatar || '👤'}</span>
                                             <span>{p.name} {p.uid === userData.uid && '(Sen)'}</span>
                                             {match.winner && match.winner.uid === p.uid && ' 👑'}
                                         </div>
                                     ))}
                                     {match.status === 'in_progress' && (
-                                        <div style={{ fontSize: '0.7rem', position: 'absolute', top: '5px', right: '5px', color: '#fbbf24' }}>
-                                            Oynanıyor...
+                                        <div style={{ fontSize: '0.7rem', position: 'absolute', top: -10, right: 0, background: '#fbbf24', color: 'black', padding: '2px 6px', borderRadius: '10px' }}>
+                                            Oynanıyor
                                         </div>
                                     )}
                                 </div>
@@ -463,7 +525,7 @@ export default function Tournament({ socket, userData, onBack }) {
                     {currentTournament.winner && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: '200px', justifyContent: 'center', alignItems: 'center' }}>
                             <h3 style={{ color: '#ffd700' }}>Şampiyon 🏆</h3>
-                            <div style={{ fontSize: '3rem' }}>{currentTournament.winner.avatar}</div>
+                            <div style={{ fontSize: '4rem', animation: 'bounce 1s infinite' }}>{currentTournament.winner.avatar}</div>
                             <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{currentTournament.winner.name}</div>
                         </div>
                     )}
@@ -471,13 +533,20 @@ export default function Tournament({ socket, userData, onBack }) {
             );
         };
 
+
+
         return (
             <div className="card fade-in" style={{ maxWidth: '900px', margin: '2rem auto' }}>
                 <h1 style={{ textAlign: 'center', marginBottom: '1rem' }}>
                     {isStarted ? '🏆 Turnuva Tablosu' : (isCreator ? '🏆 Turnuvan (Lobi)' : '⏳ Bekleniyor...')}
                 </h1>
 
-                {!isStarted ? (
+                {/* Always show bracket (Placeholder or Real) */}
+                <div style={{ marginBottom: '2rem' }}>
+                    {renderBracket()}
+                </div>
+
+                {!isStarted && (
                     <>
                         <div style={{
                             padding: '1.5rem',
@@ -514,11 +583,6 @@ export default function Tournament({ socket, userData, onBack }) {
                             </div>
                         </div>
                     </>
-                ) : (
-                    // STARTED VIEW - BRACKET
-                    <div style={{ marginBottom: '2rem' }}>
-                        {renderBracket()}
-                    </div>
                 )}
 
                 <button onClick={handleLeave} style={{
