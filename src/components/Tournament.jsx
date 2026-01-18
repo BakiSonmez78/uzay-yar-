@@ -150,7 +150,7 @@ export default function Tournament({ socket, userData, onBack }) {
                         console.log('[Tournament] Polling detected start! Checking for matches...');
                         if (tournament.bracket) {
                             const myMatch = tournament.bracket.find(m =>
-                                m.status !== 'finished' && m.playersList.some(p => p.uid === userData.uid)
+                                m.status !== 'finished' && m.players && m.players.some(p => p.uid === userData.uid)
                             );
                             if (myMatch) {
                                 console.log('[Tournament] Auto-joining match found via poll:', myMatch.roomId);
@@ -474,7 +474,7 @@ export default function Tournament({ socket, userData, onBack }) {
                             id: `placeholder_r${r}_m${m}`,
                             round: r,
                             status: 'pending',
-                            playersList: [{ name: '?' }, { name: '?' }]
+                            players: [{ name: '?' }, { name: '?' }]
                         });
                     }
                 }
@@ -498,7 +498,7 @@ export default function Tournament({ socket, userData, onBack }) {
                                     flexDirection: 'column',
                                     gap: '0.5rem'
                                 }}>
-                                    {match.playersList && match.playersList.map((p, idx) => (
+                                    {match.players && match.players.map((p, idx) => (
                                         <div key={idx} style={{
                                             display: 'flex', alignItems: 'center', gap: '0.5rem',
                                             opacity: match.winner && match.winner.uid !== p.uid ? 0.4 : (p.name === '?' ? 0.3 : 1),
