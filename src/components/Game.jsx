@@ -91,7 +91,7 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
             if (winnerId === playerId) {
                 setTimeout(() => {
                     alert("Rakip 5 hata yaptı ve elendi! Kazandın! 🏆");
-                    onFinish({ score: score + 100, opScore: 0 }); // Bonus for survival
+                    onFinish({ score: score + 100, opScore: 0, outcome: 'opponent_eliminated' }); // Bonus for survival
                 }, 500);
             }
         });
@@ -136,7 +136,7 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
                         // Notify server about elimination
                         socket.emit('player_eliminated', { roomId, playerId });
                         alert('5 hata yaptın! Elendin! 💔');
-                        onFinish({ score, opScore: localOpponentScore });
+                        onFinish({ score, opScore: localOpponentScore, outcome: 'eliminated' });
                     }, 500);
                 }
                 return newLives;

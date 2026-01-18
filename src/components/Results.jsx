@@ -1,12 +1,25 @@
 import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
 
-export default function Results({ score, opponentScore, opponentName, onRestart }) {
+export default function Results({ score, opponentScore, opponentName, onRestart, onPlayAgain, outcomeOverride }) {
     const scoreNum = Number(score);
     const opponentScoreNum = Number(opponentScore);
 
-    const isWinner = scoreNum > opponentScoreNum;
-    const isDraw = scoreNum === opponentScoreNum;
+    // Determine result based on explicit outcome override (elimination) or score comparison
+    let isWinner, isDraw;
+
+    if (outcomeOverride === 'eliminated') {
+        isWinner = false;
+        isDraw = false;
+    } else if (outcomeOverride === 'opponent_eliminated') {
+        isWinner = true;
+        isDraw = false;
+    } else {
+        isWinner = scoreNum > opponentScoreNum;
+        isDraw = scoreNum === opponentScoreNum;
+    }
+
+    const handleRestart = onRestart || onPlayAgain;
 
     useEffect(() => {
         if (isWinner) {
@@ -38,11 +51,11 @@ export default function Results({ score, opponentScore, opponentName, onRestart 
 
         // Auto-return to menu after 5 seconds
         const autoReturnTimer = setTimeout(() => {
-            onRestart();
+            if (handleRestart) handleRestart();
         }, 5000);
 
         return () => clearTimeout(autoReturnTimer);
-    }, [isWinner, onRestart]);
+    }, [isWinner, handleRestart]);
 
     return (
         <div className={`card fade-in ${!isWinner && !isDraw ? 'sad-effect' : ''}`} style={{
@@ -95,7 +108,7 @@ export default function Results({ score, opponentScore, opponentName, onRestart 
                 </div>
             </div>
 
-            <button onClick={onRestart} className="success" style={{ position: 'relative', zIndex: 1 }}>
+            <button onClick={handleRestart} className="success" style={{ position: 'relative', zIndex: 1 }}>
                 Tekrar Oyna 🔄
             </button>
 

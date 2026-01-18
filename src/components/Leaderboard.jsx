@@ -78,8 +78,13 @@ export default function Leaderboard({ onBack }) {
                                     {player.avatar}
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                                         {player.name} {getFlagEmoji(player.country)}
+                                        {player.school && (
+                                            <span style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 'normal' }}>
+                                                • {player.school}
+                                            </span>
+                                        )}
                                     </div>
                                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                                         {new Date(player.date).toLocaleDateString()}

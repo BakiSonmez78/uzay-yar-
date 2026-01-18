@@ -52,6 +52,7 @@ function App() {
   const [finalScore, setFinalScore] = useState(0);
   const [opponentScore, setOpponentScore] = useState(0);
   const [userTotalScore, setUserTotalScore] = useState(0); // Session score tracking
+  const [gameResultOutcome, setGameResultOutcome] = useState(null); // Explicit outcome override
 
   // Stable Player ID
   const playerIdRef = useRef(null);
@@ -169,7 +170,9 @@ function App() {
     // Support both direct score (legacy/fallback) and object with opScore
     const myScore = typeof result === 'object' ? result.score : result;
     const opScore = typeof result === 'object' ? result.opScore : opponentScore;
+    const outcome = typeof result === 'object' ? result.outcome : null;
 
+    setGameResultOutcome(outcome);
     setFinalScore(myScore);
     setUserTotalScore(prev => prev + myScore); // Accumulate score
     if (typeof result === 'object') {
@@ -284,8 +287,8 @@ function App() {
         <Results
           score={finalScore}
           opponentScore={opponentScore}
-          opponentName={Object.values(gameData?.players || {}).find(p => p.name !== userData.name)?.name}
-          onRestart={handleRestart}
+          onPlayAgain={() => setGameState('menu')}
+          outcomeOverride={gameResultOutcome}
         />
       )}
     </div>
