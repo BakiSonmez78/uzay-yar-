@@ -287,6 +287,7 @@ function App() {
           myName={userData.name}
           myCountry={Object.values(gameData.players).find(p => p.name === userData.name)?.country}
           onFinish={handleFinish}
+          onQuit={() => setGameState('menu')}
           startTime={gameData.startTime}
           duration={gameData.duration || 90}
         />

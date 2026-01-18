@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { soundManager } from '../utils/soundManager';
 
-export default function Game({ questions, opponent, opponentScore, socket, roomId, playerId, myName, onFinish, startTime, duration }) {
+export default function Game({ questions, opponent, opponentScore, socket, roomId, playerId, myName, onFinish, startTime, duration, onQuit }) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [timeLeft, setTimeLeft] = useState(duration || 90);
@@ -226,7 +226,11 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
             <button
                 onClick={() => {
                     if (confirm('Oyunu terk etmek istediğinize emin misiniz?')) {
-                        window.location.reload();
+                        if (onQuit) {
+                            onQuit();
+                        } else {
+                            window.location.reload();
+                        }
                     }
                 }}
                 style={{
