@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { soundManager } from '../utils/soundManager';
 
 export default function Game({ questions, opponent, opponentScore, socket, roomId, playerId, myName, onFinish, startTime, duration, onQuit }) {
@@ -13,6 +13,13 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
     const [isFinished, setIsFinished] = useState(false); // To stop timer and interactions
 
     const [localOpponentScore, setLocalOpponentScore] = useState(opponentScore || 0);
+
+    // Refs to avoid stale closures in socket listeners
+    const scoreRef = useRef(score);
+    const opponentScoreRef = useRef(localOpponentScore);
+
+    useEffect(() => { scoreRef.current = score; }, [score]);
+    useEffect(() => { opponentScoreRef.current = localOpponentScore; }, [localOpponentScore]);
 
     const currentQuestion = questions[currentIndex];
 
@@ -119,7 +126,7 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
             if (eliminatedId !== playerId) {
                 setIsFinished(true);
                 // Opponent eliminated, I win
-                handleFinishGame({ score: score + 100, opScore: localOpponentScore, outcome: 'opponent_eliminated' });
+                handleFinishGame({ score: scoreRef.current + 100, opScore: opponentScoreRef.current, outcome: 'opponent_eliminated' });
             }
         });
 
@@ -128,7 +135,7 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
             if (winnerId === playerId) {
                 // Opponent left, we win!
                 setFeedback('correct');
-                handleFinishGame({ score: score + 50, opScore: localOpponentScore, outcome: 'opponent_disconnected' });
+                handleFinishGame({ score: scoreRef.current + 50, opScore: opponentScoreRef.current, outcome: 'opponent_disconnected' });
             }
         });
 
