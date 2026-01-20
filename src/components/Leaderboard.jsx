@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, query, orderBy, limit, getDocs, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 
 export default function Leaderboard({ onBack }) {
     const [scores, setScores] = useState([]);
@@ -41,36 +41,15 @@ export default function Leaderboard({ onBack }) {
         { id: 'allTime', label: 'Tüm Zamanlar' }
     ];
 
-    const handleReset = async () => {
-        if (!confirm('⚠️ TÜM SKORLAR SİLİNECEK! Emin misin?')) return;
-        setLoading(true);
-        try {
-            const q = query(collection(db, "scores"));
-            const snapshot = await getDocs(q);
-            const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
-            await Promise.all(deletePromises);
-            setScores([]);
-            alert('✅ Liderlik tablosu başarıyla sıfırlandı.');
-        } catch (error) {
-            console.error("Sıfırlama hatası:", error);
-            alert('Hata oluştu: ' + error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
+
 
     return (
         <div className="card fade-in" style={{ maxWidth: '600px', width: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h2 style={{ margin: 0 }}>🏆 Liderlik Tablosu</h2>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                    <button className="danger" onClick={handleReset} style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
-                        🗑️ Sıfırla
-                    </button>
-                    <button className="secondary" onClick={onBack} style={{ padding: '0.5rem 1rem' }}>
-                        ⬅️ Geri
-                    </button>
-                </div>
+                <button className="secondary" onClick={onBack} style={{ padding: '0.5rem 1rem' }}>
+                    ⬅️ Geri
+                </button>
             </div>
 
             <div style={{ minHeight: '300px' }}>
