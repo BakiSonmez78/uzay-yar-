@@ -195,10 +195,11 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
 
         // Calculate optimistic score update (visual only)
         const basePoints = 10;
-        const streakBonus = streak >= 2 ? (streak * 2) : 0;
+        const nextStreak = streak + 1;
+        const streakBonus = nextStreak >= 2 ? (nextStreak * 2) : 0;
         setBonusPoints(streakBonus);
         setScore(prev => prev + basePoints + streakBonus);
-        setStreak(prev => prev + 1);
+        setStreak(nextStreak);
 
         // Emit to server to sync and allow validation
         socket.emit('solve_question', {

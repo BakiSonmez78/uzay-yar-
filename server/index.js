@@ -453,9 +453,9 @@ const handleAnswer = (roomId, playerId, questionIndex, answer) => {
         let bonus = 0;
 
         // 2. Calculate Bonus
-        // "3 seride 3 puan, 4 seride 4 puan gibi"
-        if (currentStreak >= 3) {
-            bonus = currentStreak;
+        // Sync with Client logic: start from streak 2, bonus is streak * 2
+        if (currentStreak >= 2) {
+            bonus = currentStreak * 2;
         }
 
         const points = 10 + bonus;
