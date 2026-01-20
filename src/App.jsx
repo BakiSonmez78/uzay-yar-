@@ -326,7 +326,10 @@ function App() {
           myName={userData.name}
           myCountry={Object.values(gameData.players).find(p => p.name === userData.name)?.country}
           onFinish={handleFinish}
-          onQuit={() => setGameState('menu')}
+          onQuit={() => {
+            getSocket().emit('leave_game', { roomId: gameData.roomId });
+            setGameState('menu');
+          }}
           startTime={gameData.startTime}
           duration={gameData.duration || 90}
         />
