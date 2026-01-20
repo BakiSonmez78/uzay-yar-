@@ -521,17 +521,29 @@ io.on('connection', (socket) => {
 
             console.log(`[join_queue] Queue for ${mode} has ${queues[mode].length} players.`);
 
-            if (queues[mode].length > 0) {
-                const opponent = queues[mode].shift();
+            // Find valid opponent
+            let opponent = null;
+            while (queues[mode].length > 0) {
+                const candidate = queues[mode].shift();
 
-                // Prevent self-matching (unlikely but possible with weird network glitches)
-                if (opponent.socket.id === socket.id) {
-                    console.log(`[join_queue] Skipped self-match, putting back in queue.`);
-                    queues[mode].push(opponent);
-                    queues[mode].push({ socket, playerId: stableId, name, avatar, joinedAt: Date.now(), country });
-                    return;
+                // Check if socket is still connected
+                if (candidate.socket.connected) {
+                    // Prevent self-matching
+                    if (candidate.socket.id !== socket.id) {
+                        opponent = candidate;
+                        break;
+                    } else {
+                        // Put self back later? No, we are the one joining, so candidate must be someone else.
+                        // If candidate IS us (re-join?), discard or handle properly.
+                        // Ideally we shouldn't be in queue if we just joined, but race conditions happen.
+                        // Let's discard self from queue to avoid loop, we will act as the "joiner" now.
+                    }
+                } else {
+                    console.log(`[join_queue] Discarding disconnected opponent ${candidate.socket.id} from queue.`);
                 }
+            }
 
+            if (opponent) {
                 const roomId = `${opponent.socket.id}-${socket.id}`;
                 console.log(`[join_queue] MATCH FOUND! Room: ${roomId}`);
 
