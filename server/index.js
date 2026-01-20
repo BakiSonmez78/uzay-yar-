@@ -622,14 +622,40 @@ io.on('connection', (socket) => {
             queues[mode] = queues[mode].filter(p => p.socket.id !== socket.id);
         }
 
+        // Find active games where this user was a player
+        Object.keys(games).forEach(roomId => {
+            const game = games[roomId];
+            const playerIndex = game.players.findIndex(p => p.socketId === socket.id || p.id === socket.id);
+
+            if (playerIndex !== -1) {
+                console.log(`[Disconnect] Player ${socket.id} left active game ${roomId}`);
+
+                // Identify remaining player (winner)
+                const opponent = game.players.find(p => p.socketId !== socket.id && p.id !== socket.id);
+
+                if (opponent) {
+                    // Notify opponent that they won because other disconnected
+                    // Use playerId (stable ID) for winnerId
+                    io.to(roomId).emit('opponent_disconnected', {
+                        winnerId: opponent.playerId || opponent.id
+                    });
+
+                    // If tournament, handle progression
+                    if (game.isTournamentMatch) {
+                        handleTournamentMatchEnd(game, opponent.playerId || opponent.id);
+                    }
+                }
+
+                // Cleanup game
+                delete games[roomId];
+            }
+        });
+
         // Handle tournament cleanup if player was in a waiting tournament
         Object.keys(tournaments).forEach(tournamentId => {
             const tournament = tournaments[tournamentId];
             if (tournament.status === 'waiting') {
-                // If creator disconnected, we could delete the tournament, 
-                // but let's just log for now to see if it's necessary.
-                // For now, let's keep it but maybe remove from participants if we had a way to map socket.id to uid easily.
-                // Since uid is stored, we'd need to track socketId mappings.
+                // ... (existing logic)
             }
         });
     });
