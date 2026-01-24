@@ -20,9 +20,26 @@ if (window.location.search.includes('debug')) {
 
 // Determine API URL based on environment
 const getApiUrl = () => {
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+  // Check if running in Capacitor (native mobile app)
+  const isCapacitor = window.Capacitor !== undefined;
+
+  if (isCapacitor) {
+    // Always use production server on mobile
+    console.log('[API] Running in Capacitor, using production server');
+    return 'https://uzay-yarisi-backend.onrender.com';
+  }
+
+  const hostname = window.location.hostname;
+
+  // Android Emulator uses 10.0.2.2 to access host machine's localhost
+  if (hostname === '10.0.2.2') {
+    return 'http://10.0.2.2:3001';
+  }
+
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
     return 'http://localhost:3001';
   }
+
   return 'https://uzay-yarisi-backend.onrender.com';
 };
 

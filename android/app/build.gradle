@@ -2,10 +2,10 @@ apply plugin: 'com.android.application'
 // apply plugin: 'com.google.gms.google-services' // Bu satırı alttaki try bloğu otomatik ekleyeceği için burada TUTMUYORUZ.
 
 android {
-    namespace "com.mathheroes.game"
+    namespace "com.yazgames.mathrace"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.mathheroes.game"
+        applicationId "com.yazgames.mathrace"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

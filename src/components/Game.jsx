@@ -87,9 +87,6 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
 
     useEffect(() => {
         socket.on('question_solved', ({ winnerId, newScores, nextIndex, streak, bonus }) => {
-            // Update scores using Stable PlayerID
-            setScore(newScores[playerId] || 0);
-
             // Update Opponent Score Locally
             const opponentId = Object.keys(newScores).find(id => id !== playerId);
             if (opponentId) {
@@ -98,7 +95,9 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
 
             // If OPPONENT solved it, we must advance too!
             if (winnerId !== playerId) {
-                // Optional: Visual cue that opponent won this round
+                // Opponent won - sync my score from server (I didn't get points)
+                setScore(newScores[playerId] || 0);
+
                 console.log("[Game] Opponent solved question. Advancing...");
 
                 // Small delay or instant? Instant is better for sync.
@@ -108,6 +107,14 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
                 setStreak(0);
                 setBonusPoints(0);
                 setFeedback(null);
+            } else {
+                // I won - keep my optimistic score (already updated in handleAnswer)
+                // Just verify it matches server (for debugging)
+                const serverScore = newScores[playerId] || 0;
+                if (Math.abs(score - serverScore) > 1) {
+                    console.warn('[Game] Score mismatch!', { client: score, server: serverScore });
+                    setScore(serverScore); // Sync if there's a big difference
+                }
             }
 
             // Sync final scores check
@@ -135,7 +142,13 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
             if (winnerId === playerId) {
                 // Opponent left, we win!
                 setFeedback('correct');
-                handleFinishGame({ score: winnerScore, opScore: loserScore, outcome: 'opponent_disconnected' });
+
+                // Backward compatibility: if server doesn't send scores, calculate them
+                const finalWinnerScore = winnerScore !== undefined ? winnerScore : Math.max(50, scoreRef.current);
+                const finalLoserScore = loserScore !== undefined ? loserScore : 0;
+
+                console.log('[Game] Opponent disconnected (old event)', { finalWinnerScore, finalLoserScore });
+                handleFinishGame({ score: finalWinnerScore, opScore: finalLoserScore, outcome: 'opponent_disconnected' });
             }
         });
 

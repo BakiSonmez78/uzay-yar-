@@ -51,6 +51,7 @@ const io = new Server(server, {
         origin: [
             "https://math-games-6c136.web.app",
             "https://math-games-6c136.firebaseapp.com",
+            "https://localhost", // Capacitor mobile apps
             "http://localhost:5173",
             "http://localhost:3000",
             "http://127.0.0.1:5173",

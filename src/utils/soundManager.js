@@ -1,8 +1,8 @@
 class SoundManager {
     constructor() {
-        // Using reliable sound effects from a CDN
-        this.correctSound = new Audio('https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/bonus.wav');
-        this.wrongSound = new Audio('https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/explosion_02.wav');
+        // Sound effects - reliable sources
+        this.correctSound = new Audio('https://ia801609.us.archive.org/16/items/ApplauseSound/Applause.mp3'); // Applause sound
+        this.wrongSound = new Audio('https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/explosion_02.wav'); // Explosion/error
         this.bgMusic = new Audio('https://codeskulptor-demos.commondatastorage.googleapis.com/descent/background%20music.mp3'); // Adventure music
 
         // Preload
@@ -12,8 +12,8 @@ class SoundManager {
 
         // Config
         this.bgMusic.loop = true;
-        this.correctSound.volume = 0.5;
-        this.wrongSound.volume = 0.5;
+        this.correctSound.volume = 0.7;
+        this.wrongSound.volume = 0.8;
 
         // Persist settings
         this.musicMuted = localStorage.getItem('musicMuted') === 'true';
@@ -126,13 +126,46 @@ class SoundManager {
     }
 
     playCorrect() {
-        console.log(`[SoundManager] playCorrect requested. Muted: ${this.sfxMuted}`);
         if (this.sfxMuted) return;
         try {
-            this.correctSound.currentTime = 0;
-            this.correctSound.play().catch(e => console.warn("Audio play failed", e));
+            // Resume context if suspended
+            if (this.audioCtx.state === 'suspended') {
+                this.audioCtx.resume();
+            }
+
+            // Create a short "success" chime (upward notes)
+            const now = this.audioCtx.currentTime;
+
+            // First note (higher)
+            const osc1 = this.audioCtx.createOscillator();
+            const gain1 = this.audioCtx.createGain();
+            osc1.connect(gain1);
+            gain1.connect(this.audioCtx.destination);
+
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(800, now);
+            gain1.gain.setValueAtTime(0.3, now);
+            gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+            osc1.start(now);
+            osc1.stop(now + 0.15);
+
+            // Second note (even higher) - delayed slightly
+            const osc2 = this.audioCtx.createOscillator();
+            const gain2 = this.audioCtx.createGain();
+            osc2.connect(gain2);
+            gain2.connect(this.audioCtx.destination);
+
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(1000, now + 0.08);
+            gain2.gain.setValueAtTime(0.3, now + 0.08);
+            gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+
+            osc2.start(now + 0.08);
+            osc2.stop(now + 0.25);
+
         } catch (e) {
-            console.error("Sound error", e);
+            console.error("Success sound error", e);
         }
     }
 

@@ -96,7 +96,7 @@ export default function Results({ score, opponentScore, opponentName, onRestart,
                 <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>SEN</div>
                     <div style={{ fontSize: '3rem', fontWeight: 'bold', color: isWinner ? '#4ade80' : 'white' }}>
-                        {score}
+                        {score !== undefined && score !== null ? score : '?'}
                     </div>
                 </div>
 
@@ -105,7 +105,7 @@ export default function Results({ score, opponentScore, opponentName, onRestart,
                 <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>{opponentName || 'Rakip'}</div>
                     <div style={{ fontSize: '3rem', fontWeight: 'bold', color: !isWinner && !isDraw ? '#4ade80' : 'white' }}>
-                        {opponentScore}
+                        {opponentScore !== undefined && opponentScore !== null ? opponentScore : '?'}
                     </div>
                 </div>
             </div>

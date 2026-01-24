@@ -97,9 +97,8 @@ export default function Welcome({ onStart }) {
             bottom: '40px',
             left: '85px',
             fontSize: '4rem',
-            animation: 'pop-in 0.8s ease-out forwards',
-            animationDelay: '1.2s',
-            transform: 'scaleX(-1)' // Mirror
+            animation: 'fadeIn 0.8s ease-out forwards',
+            animationDelay: '1.2s'
           }}>
             ⛱️
           </div>

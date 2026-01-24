@@ -1,4 +1,4 @@
-package com.mathheroes.game;
+package com.yazgames.mathrace;
 
 import com.getcapacitor.BridgeActivity;
 
