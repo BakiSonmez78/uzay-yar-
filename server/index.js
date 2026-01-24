@@ -453,9 +453,9 @@ const handleAnswer = (roomId, playerId, questionIndex, answer) => {
         let bonus = 0;
 
         // 2. Calculate Bonus
-        // Sync with Client logic: start from streak 2, bonus is streak * 2
-        if (currentStreak >= 2) {
-            bonus = currentStreak * 2;
+        // Sync with Client logic: start from streak 3, bonus is streak * 10
+        if (currentStreak >= 3) {
+            bonus = currentStreak * 10;
         }
 
         const points = 10 + bonus;
@@ -644,9 +644,34 @@ io.on('connection', (socket) => {
                 const opponent = game.players.find(p => p.socketId !== sock.id && p.id !== sock.id);
 
                 if (opponent) {
-                    // Notify opponent that they won because other disconnected/left
-                    io.to(roomId).emit('opponent_disconnected', {
-                        winnerId: opponent.playerId || opponent.id
+                    // Get disconnected player
+                    const disconnectedPlayer = game.players[playerIndex];
+                    const disconnectedPlayerId = disconnectedPlayer.playerId || disconnectedPlayer.id;
+                    const opponentPlayerId = opponent.playerId || opponent.id;
+
+                    // Calculate scores: winner gets max(50, current_score), loser gets 0
+                    const winnerCurrentScore = game.scores[opponentPlayerId] || 0;
+                    const winnerFinalScore = Math.max(50, winnerCurrentScore);
+
+                    console.log(`[GameTerminated] Winner: ${opponentPlayerId} (${winnerFinalScore} pts), Loser: ${disconnectedPlayerId} (0 pts)`);
+
+                    // Send to WINNER (remaining player)
+                    if (opponent.socketId) {
+                        const winnerSocket = io.sockets.sockets.get(opponent.socketId);
+                        if (winnerSocket) {
+                            winnerSocket.emit('game_forfeit_win', {
+                                myScore: winnerFinalScore,
+                                opponentScore: 0,
+                                outcome: 'opponent_disconnected'
+                            });
+                        }
+                    }
+
+                    // Send to LOSER (disconnecting player) - BEFORE they fully disconnect
+                    sock.emit('game_forfeit_loss', {
+                        myScore: 0,
+                        opponentScore: winnerFinalScore,
+                        outcome: 'you_left'
                     });
 
                     // If tournament, handle progression

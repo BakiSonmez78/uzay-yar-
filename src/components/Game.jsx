@@ -130,12 +130,12 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
             }
         });
 
-        socket.on('opponent_disconnected', ({ winnerId }) => {
+        socket.on('opponent_disconnected', ({ winnerId, winnerScore, loserScore }) => {
             if (isFinished) return;
             if (winnerId === playerId) {
                 // Opponent left, we win!
                 setFeedback('correct');
-                handleFinishGame({ score: scoreRef.current + 50, opScore: opponentScoreRef.current, outcome: 'opponent_disconnected' });
+                handleFinishGame({ score: winnerScore, opScore: loserScore, outcome: 'opponent_disconnected' });
             }
         });
 
@@ -143,11 +143,30 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
             setOpponentLives(prev => Math.max(0, prev - 1));
         });
 
+        // NEW: Handle forfeit win (opponent left/disconnected)
+        socket.on('game_forfeit_win', ({ myScore, opponentScore, outcome }) => {
+            if (isFinished) return;
+            console.log('[Game] Opponent forfeited, I win!', { myScore, opponentScore });
+            setIsFinished(true);
+            setFeedback('correct');
+            handleFinishGame({ score: myScore, opScore: opponentScore, outcome: 'opponent_disconnected' });
+        });
+
+        // NEW: Handle forfeit loss (I left/disconnected)
+        socket.on('game_forfeit_loss', ({ myScore, opponentScore, outcome }) => {
+            if (isFinished) return;
+            console.log('[Game] I forfeited, I lose', { myScore, opponentScore });
+            setIsFinished(true);
+            handleFinishGame({ score: myScore, opScore: opponentScore, outcome: 'you_left' });
+        });
+
         return () => {
             socket.off('question_solved');
             socket.off('opponent_disconnected');
             socket.off('opponent_eliminated');
             socket.off('opponent_wrong_answer');
+            socket.off('game_forfeit_win');
+            socket.off('game_forfeit_loss');
         };
     }, [socket, questions.length, playerId, isFinished]); // Removed score from dependency to avoid re-binding loop
 
@@ -196,7 +215,7 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
         // Calculate optimistic score update (visual only)
         const basePoints = 10;
         const nextStreak = streak + 1;
-        const streakBonus = nextStreak >= 2 ? (nextStreak * 2) : 0;
+        const streakBonus = nextStreak >= 3 ? (nextStreak * 10) : 0;
         setBonusPoints(streakBonus);
         setScore(prev => prev + basePoints + streakBonus);
         setStreak(nextStreak);

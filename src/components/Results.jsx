@@ -8,10 +8,10 @@ export default function Results({ score, opponentScore, opponentName, onRestart,
     // Determine result based on explicit outcome override (elimination) or score comparison
     let isWinner, isDraw;
 
-    if (outcomeOverride === 'eliminated') {
+    if (outcomeOverride === 'eliminated' || outcomeOverride === 'you_left') {
         isWinner = false;
         isDraw = false;
-    } else if (outcomeOverride === 'opponent_eliminated') {
+    } else if (outcomeOverride === 'opponent_eliminated' || outcomeOverride === 'opponent_disconnected') {
         isWinner = true;
         isDraw = false;
     } else {
