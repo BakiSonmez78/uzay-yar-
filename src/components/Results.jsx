@@ -2,8 +2,10 @@ import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
 
 export default function Results({ score, opponentScore, opponentName, onRestart, onPlayAgain, outcomeOverride, isTournament }) {
-    const scoreNum = Number(score);
-    const opponentScoreNum = Number(opponentScore);
+    const scoreNum = Number(score) || 0;
+    const opponentScoreNum = Number(opponentScore) || 0;
+
+    console.log('[Results] Received props:', { score, opponentScore, scoreNum, opponentScoreNum, outcomeOverride });
 
     // Determine result based on explicit outcome override (elimination) or score comparison
     let isWinner, isDraw;

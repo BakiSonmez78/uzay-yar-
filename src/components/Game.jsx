@@ -215,7 +215,7 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
         // Calculate optimistic score update (visual only)
         const basePoints = 10;
         const nextStreak = streak + 1;
-        const streakBonus = nextStreak >= 3 ? (nextStreak * 10) : 0;
+        const streakBonus = nextStreak >= 3 ? nextStreak : 0;
         setBonusPoints(streakBonus);
         setScore(prev => prev + basePoints + streakBonus);
         setStreak(nextStreak);

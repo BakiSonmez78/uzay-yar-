@@ -199,11 +199,15 @@ function App() {
     const opScore = typeof result === 'object' ? result.opScore : opponentScore;
     const outcome = typeof result === 'object' ? result.outcome : null;
 
+    console.log('[App] handleFinish called with:', { myScore, opScore, outcome });
+
+    // Update all states BEFORE async operations
     setGameResultOutcome(outcome);
     setFinalScore(myScore);
+    setOpponentScore(opScore);
     setUserTotalScore(prev => prev + myScore); // Accumulate score
+
     if (typeof result === 'object') {
-      setOpponentScore(opScore); // Explicitly update opponent score from Game state
       // Save to server leaderboard
       const currentSocket = getSocket(); // Get the socket instance
       if (currentSocket) {
