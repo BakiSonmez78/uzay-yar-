@@ -11,6 +11,7 @@ import Results from './components/Results';
 import Matchmaking from './components/Matchmaking';
 import Leaderboard from './components/Leaderboard';
 import Tournament from './components/Tournament';
+import PrivateRoom from './components/PrivateRoom';
 import VConsole from 'vconsole';
 
 // Init vConsole for mobile debugging
@@ -106,7 +107,7 @@ function App() {
             school: '' // Could be loaded from Firestore if saved
           });
           setIsAuthenticated(true);
-          setGameState('menu');
+          setGameState('welcome'); // Always show splash screen first, even for returning users
         } else {
           // Anonymous user - don't auto-restore (they get new session each time)
           console.log('[Auth] Anonymous user detected, requiring fresh login');
@@ -293,11 +294,63 @@ function App() {
     setGameData(null);
   };
 
+  const handleLogout = async () => {
+    const auth = getAuth();
+    try {
+      await auth.signOut();
+      console.log('[Auth] User logged out successfully');
+      setIsAuthenticated(false);
+      setUserData(null);
+      setGameState('login');
+    } catch (error) {
+      console.error('[Auth] Logout error:', error);
+    }
+  };
+
+  const handleShowPrivateRoom = () => {
+    setGameState('private_room');
+  };
+
+  const handleBackFromPrivateRoom = () => {
+    setGameState('menu');
+  };
+
+  const handlePrivateRoomCreated = ({ roomCode }) => {
+    console.log('[App] Private room created:', roomCode);
+  };
+
+  const handlePrivateRoomJoined = ({ roomId, players, gameMode, questions, startTime, duration }) => {
+    console.log('[App] Private room joined:', { roomId, players, gameMode, questionsCount: questions?.length });
+
+    soundManager.stopMusic(); // Stop menu music
+
+    setGameData({
+      roomId,
+      players,
+      questions: questions || [],
+      mode: gameMode,
+      startTime: startTime || Date.now(),
+      duration: duration || 90,
+      isPrivateRoom: true
+    });
+    setGameState('playing');
+  };
+
   return (
     <div className="app-container">
       {gameState === 'welcome' && <Welcome onStart={handleEnterGame} />}
       {gameState === 'login' && <Login onLoginSuccess={handleLoginSuccess} />}
-      {gameState === 'menu' && <Menu userData={userData} onStart={handleStart} onShowLeaderboard={handleShowLeaderboard} onShowTournament={handleShowTournament} totalScore={userTotalScore} />}
+      {gameState === 'menu' && <Menu userData={userData} onStart={handleStart} onShowLeaderboard={handleShowLeaderboard} onShowTournament={handleShowTournament} onShowPrivateRoom={handleShowPrivateRoom} totalScore={userTotalScore} onLogout={handleLogout} />}
+
+      {gameState === 'private_room' && (
+        <PrivateRoom
+          socket={getSocket()}
+          userData={userData}
+          onBack={handleBackFromPrivateRoom}
+          onRoomCreated={handlePrivateRoomCreated}
+          onRoomJoined={handlePrivateRoomJoined}
+        />
+      )}
 
       {gameState === 'leaderboard' && (
         <Leaderboard

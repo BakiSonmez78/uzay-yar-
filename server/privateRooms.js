@@ -132,7 +132,10 @@ const setupPrivateRoomHandlers = (io, socket, games, generateQuestions) => {
         io.to(room.roomId).emit('private_room_joined', {
             roomId: room.roomId,
             players,
-            gameMode: room.gameMode
+            gameMode: room.gameMode,
+            questions: questions,
+            startTime: Date.now(),
+            duration: 90
         });
 
         console.log(`[PrivateRoom] Game starting in room ${roomCode}`);
