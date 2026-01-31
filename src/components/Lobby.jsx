@@ -7,15 +7,23 @@ export default function Lobby({ name, avatar, onSelectMode, initialOpponentType 
     const [, forceUpdate] = React.useState(0); // For re-rendering when sound settings change
 
     const modes = [
-        { id: '+', label: 'Toplama', icon: '+' },
-        { id: '-', label: 'Çıkartma', icon: '-' },
-        { id: '*', label: 'Çarpma', icon: '×' },
-        { id: '/', label: 'Bölme', icon: '÷' },
-        { id: 'mixed', label: 'Karışık', icon: '?' },
+        { id: '+', label: 'Toplama', icon: '+', category: 'Temel' },
+        { id: '-', label: 'Çıkartma', icon: '-', category: 'Temel' },
+        { id: '*', label: 'Çarpma', icon: '×', category: 'Temel' },
+        { id: '/', label: 'Bölme', icon: '÷', category: 'Temel' },
+        { id: 'mixed', label: 'Karışık', icon: '?', category: 'Temel' },
+        { id: 'fractions_add', label: 'Kesir Toplama', icon: '½+¼', category: 'İleri' },
+        { id: 'fractions_compare', label: 'Kesir Karşılaştırma', icon: '½>¼', category: 'İleri' },
+        { id: 'percentages', label: 'Yüzdeler', icon: '%', category: 'İleri' },
+        { id: 'area_rectangle', label: 'Alan (Dikdörtgen)', icon: '□', category: 'İleri' },
+        { id: 'perimeter', label: 'Çevre', icon: '⬜', category: 'İleri' },
+        { id: 'word_problems', label: 'Sözel Problemler', icon: '📝', category: 'İleri' },
+        { id: 'time', label: 'Saat Hesaplama', icon: '🕐', category: 'İleri' },
+        { id: 'patterns', label: 'Örüntüler', icon: '🔢', category: 'İleri' },
     ];
 
     return (
-        <div className="card fade-in" style={{ position: 'relative' }}>
+        <div className="card fade-in" style={{ position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}>
             {/* Audio Controls - Top Right */}
             <div style={{
                 position: 'absolute',
@@ -97,21 +105,79 @@ export default function Lobby({ name, avatar, onSelectMode, initialOpponentType 
             )}
 
             <p style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>
-                Hangi işlemde yarışmak istersin?
+                Hangi konuda yarışmak istersin?
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                {modes.map(mode => (
-                    <button
-                        key={mode.id}
-                        onClick={() => onSelectMode(mode.id, opponentType, botDifficulty)}
-                        className="secondary"
-                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}
-                    >
-                        <span style={{ fontSize: '2rem', fontWeight: 'bold' }}>{mode.icon}</span>
-                        <span>{mode.label}</span>
-                    </button>
-                ))}
+            {/* Temel Matematik */}
+            <div style={{ marginBottom: '2rem' }}>
+                <h3 style={{
+                    fontSize: '1.2rem',
+                    marginBottom: '1rem',
+                    color: '#3b82f6',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                }}>
+                    ➕ Temel Matematik
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+                    {modes.filter(m => m.category === 'Temel').map(mode => (
+                        <button
+                            key={mode.id}
+                            onClick={() => onSelectMode(mode.id, opponentType, botDifficulty)}
+                            className="secondary"
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                padding: '1rem 0.5rem'
+                            }}
+                        >
+                            <span style={{ fontSize: '2rem', fontWeight: 'bold' }}>{mode.icon}</span>
+                            <span style={{ fontSize: '0.9rem' }}>{mode.label}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* İleri Matematik */}
+            <div style={{ marginBottom: '1rem' }}>
+                <h3 style={{
+                    fontSize: '1.2rem',
+                    marginBottom: '1rem',
+                    color: '#10b981',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                }}>
+                    🎓 İleri Matematik
+                </h3>
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '0.8rem'
+                }}>
+                    {modes.filter(m => m.category === 'İleri').map(mode => (
+                        <button
+                            key={mode.id}
+                            onClick={() => onSelectMode(mode.id, opponentType, botDifficulty)}
+                            className="secondary"
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                padding: '1rem 0.5rem',
+                                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1))',
+                                border: '1px solid rgba(16, 185, 129, 0.3)'
+                            }}
+                        >
+                            <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{mode.icon}</span>
+                            <span style={{ fontSize: '0.85rem', textAlign: 'center' }}>{mode.label}</span>
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Back Button */}

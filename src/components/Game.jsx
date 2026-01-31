@@ -8,8 +8,8 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
     const [streak, setStreak] = useState(0);
     const [feedback, setFeedback] = useState(null);
     const [bonusPoints, setBonusPoints] = useState(0); // For UI display
-    const [lives, setLives] = useState(5); // 5 lives system
-    const [opponentLives, setOpponentLives] = useState(5);
+    const [lives, setLives] = useState(3); // 3 lives system
+    const [opponentLives, setOpponentLives] = useState(3);
     const [isFinished, setIsFinished] = useState(false); // To stop timer and interactions
 
     const [localOpponentScore, setLocalOpponentScore] = useState(opponentScore || 0);
@@ -22,6 +22,13 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
     useEffect(() => { opponentScoreRef.current = localOpponentScore; }, [localOpponentScore]);
 
     const currentQuestion = questions[currentIndex];
+
+    // Debug logging
+    useEffect(() => {
+        console.log('[Game] Questions array:', questions);
+        console.log('[Game] Current index:', currentIndex);
+        console.log('[Game] Current question:', currentQuestion);
+    }, [currentIndex, questions, currentQuestion]);
 
     // Sync local state if prop changes (initial setup)
     useEffect(() => {
@@ -261,7 +268,9 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
     if (!currentQuestion) return <div>Yükleniyor...</div>;
 
     return (
-        <div className="card fade-in" style={{ maxWidth: '900px', position: 'relative' }}>
+        <div className="card fade-in" style={{ maxWidth: '900px', position: 'relative', overflow: 'hidden' }}>
+
+
             {/* Quit Button - Top Right */}
             <button
                 onClick={() => {
@@ -292,90 +301,129 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
                 ❌ Çık
             </button>
 
-            {/* Header with Scores */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '2rem', marginBottom: '2rem', alignItems: 'center' }}>
+            {/* Timer - Top Center */}
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                <div className={`timer-circle ${timeLeft <= 20 ? 'urgent' : ''} ${timeLeft <= 10 ? 'pulse-fast' : ''}`} style={{
+                    width: '80px',
+                    height: '80px',
+                    fontSize: '2.5rem'
+                }}>
+                    {timeLeft}
+                </div>
+            </div>
 
-                {/* Player Score */}
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>
-                        {/* {getFlagEmoji(myCountry || 'TR')} */} {myName} (SEN)
-                    </div>
-                    <div className="score-box" style={{
-                        fontSize: '2.5rem',
-                        color: '#60a5fa',
-                        maxWidth: '120px',
+            {/* Player & Opponent - Side by Side */}
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '1rem',
+                marginBottom: '2rem'
+            }}>
+                {/* Player */}
+                <div>
+                    {/* Name outside card */}
+                    <div style={{
+                        fontSize: '1.3rem',
+                        fontWeight: 'bold',
+                        marginBottom: '0.5rem',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
+                        whiteSpace: 'nowrap',
+                        textAlign: 'center',
+                        color: '#60a5fa'
                     }}>
-                        {score}
+                        {myName}
                     </div>
-                    {/* Streak Indicator */}
-                    {streak > 2 && (
-                        <div style={{ color: '#fbbf24', fontSize: '0.9rem', marginTop: '0.5rem' }}>
-                            🔥 {streak} Seri!
+                    {/* Card */}
+                    <div style={{
+                        background: 'rgba(96, 165, 250, 0.1)',
+                        padding: '1rem',
+                        borderRadius: '15px',
+                        border: '2px solid rgba(96, 165, 250, 0.3)',
+                        textAlign: 'center'
+                    }}>
+                        {/* Small hearts on top */}
+                        <div style={{ fontSize: '1.3rem', letterSpacing: '0.2rem', marginBottom: '0.5rem' }}>
+                            {Array.from({ length: 3 }).map((_, i) => (
+                                <span key={i} style={{ opacity: i < lives ? 1 : 0.2 }}>
+                                    ❤️
+                                </span>
+                            ))}
                         </div>
-                    )}
-                    {/* Lives Display */}
-                    <div style={{ marginTop: '0.5rem', fontSize: '1.5rem' }}>
-                        {Array.from({ length: 5 }).map((_, i) => (
-                            <span key={i} style={{ opacity: i < lives ? 1 : 0.2 }}>
-                                ❤️
-                            </span>
-                        ))}
+                        {/* Big score at bottom */}
+                        <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#60a5fa' }}>
+                            {score}
+                        </div>
                     </div>
                 </div>
 
-                {/* Timer */}
-                <div style={{ position: 'relative' }}>
-                    <div className={`timer-circle ${timeLeft <= 20 ? 'urgent' : ''} ${timeLeft <= 10 ? 'pulse-fast' : ''}`}>
-                        {timeLeft}
-                    </div>
-                </div>
-
-                {/* Opponent Score */}
-                <div style={{ textAlign: 'center', opacity: opponent ? 1 : 0.5 }}>
-                    <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>
-                        {opponent ? opponent.name : 'Rakip Bekleniyor...'} {/* {opponent && getFlagEmoji(opponent.country || 'TR')} */}
-                    </div>
-                    <div className="score-box" style={{
-                        fontSize: '2.5rem',
-                        color: '#f87171',
-                        maxWidth: '120px',
+                {/* Opponent */}
+                <div style={{ opacity: opponent ? 1 : 0.5 }}>
+                    {/* Name outside card */}
+                    <div style={{
+                        fontSize: '1.3rem',
+                        fontWeight: 'bold',
+                        marginBottom: '0.5rem',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
+                        whiteSpace: 'nowrap',
+                        textAlign: 'center',
+                        color: '#f87171'
                     }}>
-                        {localOpponentScore}
+                        {opponent ? opponent.name : 'Robot'}
                     </div>
-                    {/* Opponent Lives Display */}
-                    <div style={{ marginTop: '0.5rem', fontSize: '1.5rem' }}>
-                        {Array.from({ length: 5 }).map((_, i) => (
-                            <span key={i} style={{ opacity: i < opponentLives ? 1 : 0.2 }}>
-                                ❤️
-                            </span>
-                        ))}
+                    {/* Card */}
+                    <div style={{
+                        background: 'rgba(248, 113, 113, 0.1)',
+                        padding: '1rem',
+                        borderRadius: '15px',
+                        border: '2px solid rgba(248, 113, 113, 0.3)',
+                        textAlign: 'center'
+                    }}>
+                        {/* Small hearts on top */}
+                        <div style={{ fontSize: '1.3rem', letterSpacing: '0.2rem', marginBottom: '0.5rem' }}>
+                            {Array.from({ length: 3 }).map((_, i) => (
+                                <span key={i} style={{ opacity: i < opponentLives ? 1 : 0.2 }}>
+                                    ❤️
+                                </span>
+                            ))}
+                        </div>
+                        {/* Big score at bottom */}
+                        <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#f87171' }}>
+                            {localOpponentScore}
+                        </div>
                     </div>
                 </div>
-
             </div>
 
             {/* Question */}
             <div style={{
-                fontSize: '4rem',
+                fontSize: currentQuestion.text ? '1.8rem' : '3rem',
                 fontWeight: 'bold',
-                margin: '1rem 0 2rem',
+                margin: '1.5rem 0 2rem',
                 color: feedback === 'correct' ? '#4ade80' : feedback === 'wrong' ? '#ef4444' : 'white',
-                transition: 'color 0.3s'
+                transition: 'color 0.3s',
+                lineHeight: 1.3,
+                padding: '0 1rem',
+                textAlign: 'center'
             }}>
-                {currentQuestion.num1} {currentQuestion.op} {currentQuestion.num2} = ?
+                {(() => {
+                    console.log('[Game] Current Question:', currentQuestion);
+                    return currentQuestion.text || `${currentQuestion.num1} ${currentQuestion.op} ${currentQuestion.num2} = ?`;
+                })()}
             </div>
 
             {/* Options */}
-            <div className="game-grid">
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: '1rem',
+                maxWidth: '500px',
+                margin: '0 auto'
+            }}>
                 {currentQuestion.options.map((opt, idx) => (
                     <button
-                        key={`${currentIndex} -${idx} `}
+                        key={`${currentIndex}-${idx}`}
                         className="option-btn"
                         onClick={(e) => {
                             e.currentTarget.blur();
@@ -383,8 +431,16 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
                         }}
                         disabled={feedback !== null}
                         style={{
-                            background: feedback && opt === currentQuestion.answer ? 'rgba(74, 222, 128, 0.2)' : undefined,
-                            borderColor: feedback && opt === currentQuestion.answer ? '#4ade80' : undefined
+                            minHeight: '100px',
+                            fontSize: '2.5rem',
+                            fontWeight: 'bold',
+                            padding: '1rem',
+                            borderRadius: '15px',
+                            background: feedback && opt === currentQuestion.answer ? 'rgba(74, 222, 128, 0.3)' : 'rgba(139, 92, 246, 0.2)',
+                            border: feedback && opt === currentQuestion.answer ? '3px solid #4ade80' : '2px solid rgba(139, 92, 246, 0.5)',
+                            color: 'white',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
                         }}
                     >
                         {opt}

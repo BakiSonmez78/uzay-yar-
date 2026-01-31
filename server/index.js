@@ -8,6 +8,8 @@ const app = express();
 app.use(cors());
 
 const requestIp = require('request-ip');
+const { setupPrivateRoomHandlers } = require('./privateRooms');
+const { generateAdvancedQuestions } = require('./advancedQuestions');
 
 // Helper to get country from IP
 const getCountryCode = async (ip) => {
@@ -46,6 +48,21 @@ app.get('/', (req, res) => {
     res.send('Math Racing Backend v1.1.4 - Tournament Sync Fix');
 });
 
+// Test endpoint for advanced questions
+app.get('/test-questions/:category', (req, res) => {
+    const { category } = req.params;
+    try {
+        const questions = generateQuestions(category);
+        res.json({
+            category,
+            count: questions.length,
+            sample: questions[0]
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 const io = new Server(server, {
     cors: {
         origin: [
@@ -81,6 +98,17 @@ const tournaments = {}; // { tournamentId: { id, size, players: [], status: 'wai
 
 // Generate questions for a game
 const generateQuestions = (mode) => {
+    // Check if it's an advanced category
+    const advancedCategories = [
+        'fractions_add', 'fractions_compare', 'percentages',
+        'area_rectangle', 'perimeter', 'word_problems', 'time', 'patterns'
+    ];
+
+    if (advancedCategories.includes(mode)) {
+        return generateAdvancedQuestions(mode);
+    }
+
+    // Original basic math questions
     const questions = [];
     for (let i = 0; i < 50; i++) { // Generate 50 questions per match
         const ops = mode === 'mixed' ? ['+', '-', '*', '/'] : [mode];
@@ -493,6 +521,9 @@ const handleAnswer = (roomId, playerId, questionIndex, answer) => {
 
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
+
+    // Setup private room handlers
+    setupPrivateRoomHandlers(io, socket, games, generateQuestions);
 
     socket.on('join_queue', async ({ name, avatar, mode, matchType, playerId, botDifficulty }) => {
         // Fallback for older clients or if playerId is missing
