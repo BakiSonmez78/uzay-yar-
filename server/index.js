@@ -499,6 +499,7 @@ const handleAnswer = (roomId, playerId, questionIndex, answer) => {
         game.currentIndex++;
 
         // Broadcast Update
+        console.log(`[handleAnswer] Broadcasting question_solved to room ${roomId}:`, { winnerId: playerId, newScores: game.scores, nextIndex: game.currentIndex });
         io.to(roomId).emit('question_solved', {
             winnerId: playerId,
             newScores: game.scores,

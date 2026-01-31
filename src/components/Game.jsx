@@ -95,8 +95,10 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
     useEffect(() => {
         socket.on('question_solved', ({ winnerId, newScores, nextIndex, streak, bonus }) => {
             // Update Opponent Score Locally
+            console.log('[Game] question_solved received:', { winnerId, newScores, myPlayerId: playerId });
             const opponentId = Object.keys(newScores).find(id => id !== playerId);
             if (opponentId) {
+                console.log('[Game] Updating opponent score:', { opponentId, score: newScores[opponentId] });
                 setLocalOpponentScore(newScores[opponentId]);
             }
 
