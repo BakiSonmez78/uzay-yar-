@@ -222,6 +222,7 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
             });
 
             // Notify server to reset streak
+            console.log('[Game] Emitting wrong_answer:', { roomId, playerId });
             socket.emit('wrong_answer', { roomId, playerId });
 
             setTimeout(() => setFeedback(null), 1000); // Clear wrong feedback

@@ -607,7 +607,10 @@ io.on('connection', (socket) => {
             game.streaks[stableId] = 0;
 
             // Broadcast to opponent so they can update their UI (reduce hearts)
+            console.log(`[wrong_answer] Broadcasting opponent_wrong_answer to room ${roomId}`);
             socket.to(roomId).emit('opponent_wrong_answer', { playerId: stableId });
+        } else {
+            console.warn(`[wrong_answer] Game not found or no streaks for room ${roomId}`);
         }
     });
 
