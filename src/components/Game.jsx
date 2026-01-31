@@ -102,9 +102,7 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
 
             // If OPPONENT solved it, we must advance too!
             if (winnerId !== playerId) {
-                // Opponent won - sync my score from server (I didn't get points)
-                setScore(newScores[playerId] || 0);
-
+                // Opponent won - DON'T change my score, just advance question
                 console.log("[Game] Opponent solved question. Advancing...");
 
                 // Small delay or instant? Instant is better for sync.
@@ -115,13 +113,10 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
                 setBonusPoints(0);
                 setFeedback(null);
             } else {
-                // I won - keep my optimistic score (already updated in handleAnswer)
-                // Just verify it matches server (for debugging)
+                // I won - always sync to server score
                 const serverScore = newScores[playerId] || 0;
-                if (Math.abs(score - serverScore) > 1) {
-                    console.warn('[Game] Score mismatch!', { client: score, server: serverScore });
-                    setScore(serverScore); // Sync if there's a big difference
-                }
+                console.log('[Game] I solved question!', { clientScore: score, serverScore });
+                setScore(serverScore);
             }
 
             // Sync final scores check
