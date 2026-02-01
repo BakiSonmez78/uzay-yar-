@@ -54,6 +54,7 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  position: relative;
 }
 
 /* Desktop: add max-width and more padding */
@@ -63,6 +64,12 @@ body {
     padding: 2rem;
     height: auto;
     min-height: 100vh;
+    display: block; /* Remove flex on desktop */
+  }
+  
+  body {
+    align-items: flex-start; /* Prevent centering issues */
+    padding-top: 2rem;
   }
 }
 
