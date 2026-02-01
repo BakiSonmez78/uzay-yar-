@@ -14,7 +14,7 @@
   },
   "build": {
     "appId": "com.mathheroes.game",
-    "productName": "Matematik Uzay Yarışı",
+    "productName": "Astromath",
     "directories": {
       "output": "dist_electron"
     },
@@ -37,9 +37,10 @@
     }
   },
   "dependencies": {
-    "@capacitor/android": "^7.4.5",
-    "@capacitor/cli": "^7.4.5",
-    "@capacitor/core": "^7.4.5",
+    "@capacitor-firebase/authentication": "^8.0.1",
+    "@capacitor/android": "^8.0.2",
+    "@capacitor/cli": "^8.0.2",
+    "@capacitor/core": "^8.0.2",
     "canvas-confetti": "^1.9.4",
     "cors": "^2.8.5",
     "express": "^5.2.1",

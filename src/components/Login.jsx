@@ -1,35 +1,59 @@
 import React, { useState } from 'react';
-import { getAuth, signInWithPopup, GoogleAuthProvider, signInAnonymously } from 'firebase/auth';
+import { getAuth, signInWithPopup, signInWithCredential, GoogleAuthProvider, signInAnonymously } from 'firebase/auth';
+import { Capacitor } from '@capacitor/core';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 
 export default function Login({ onLoginSuccess }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const auth = getAuth();
+    const isNative = Capacitor.isNativePlatform();
 
     const handleGoogleLogin = async () => {
         setLoading(true);
         setError('');
         try {
-            const provider = new GoogleAuthProvider();
+            if (isNative) {
+                // Mobile: Use Capacitor Firebase Authentication
+                console.log('[Login] Using Capacitor Firebase Authentication for mobile');
 
-            // Force account selection every time
-            provider.setCustomParameters({
-                prompt: 'select_account'
-            });
+                const result = await FirebaseAuthentication.signInWithGoogle();
+                console.log('[Login] Capacitor sign-in result:', result);
 
-            console.log('[Login] Starting Google Sign-In...');
-            const result = await signInWithPopup(auth, provider);
-            const user = result.user;
+                // Get credential and sign in to Firebase
+                const credential = GoogleAuthProvider.credential(result.credential?.idToken);
+                const userCredential = await signInWithCredential(auth, credential);
+                const user = userCredential.user;
 
-            console.log('[Login] Sign-in successful:', user.email);
-            onLoginSuccess({
-                name: user.displayName || 'Google User',
-                avatar: '👤',
-                email: user.email,
-                uid: user.uid,
-                isGuest: false
-            });
+                console.log('[Login] Sign-in successful:', user.email);
+                onLoginSuccess({
+                    name: user.displayName || 'Google User',
+                    avatar: '👤',
+                    email: user.email,
+                    uid: user.uid,
+                    isGuest: false
+                });
+            } else {
+                // Web: Use popup
+                console.log('[Login] Using signInWithPopup for web');
+                const provider = new GoogleAuthProvider();
+                provider.setCustomParameters({
+                    prompt: 'select_account'
+                });
+
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+
+                console.log('[Login] Sign-in successful:', user.email);
+                onLoginSuccess({
+                    name: user.displayName || 'Google User',
+                    avatar: '👤',
+                    email: user.email,
+                    uid: user.uid,
+                    isGuest: false
+                });
+            }
         } catch (err) {
             console.error('[Login] Google login error:', err);
             console.error('[Login] Error code:', err.code);

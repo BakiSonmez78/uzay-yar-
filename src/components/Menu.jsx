@@ -6,7 +6,7 @@ import hedgehogImg from '../assets/hedgehog_pointing.png';
 
 // I'll do that first in a separate tool or just write the content to src/components/Menu.jsx assuming the image is there.
 
-export default function Menu({ userData, onStart, onShowLeaderboard, onShowTournament, totalScore = 0 }) {
+export default function Menu({ userData, onStart, onShowLeaderboard, onShowTournament, onShowPrivateRoom, totalScore = 0, onLogout }) {
     const [name, setName] = useState(userData?.name || '');
     const [selectedAvatar, setSelectedAvatar] = useState(userData?.avatar || '🐶');
     const [showAvatars, setShowAvatars] = useState(false);
@@ -76,6 +76,11 @@ export default function Menu({ userData, onStart, onShowLeaderboard, onShowTourn
                     <button onClick={() => toggleAudio('sfx')} className="icon-btn" title="Ses">
                         {soundManager.sfxMuted ? '🔇' : '🔊'}
                     </button>
+                    {userData && !userData.isGuest && onLogout && (
+                        <button onClick={onLogout} className="icon-btn" title="Çıkış Yap" style={{ background: 'rgba(239, 68, 68, 0.3)' }}>
+                            🚪
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -252,6 +257,27 @@ export default function Menu({ userData, onStart, onShowLeaderboard, onShowTourn
                     <button
                         onClick={(e) => {
                             e.preventDefault();
+                            if (name.trim()) onShowPrivateRoom();
+                        }}
+                        style={{
+                            width: '100%',
+                            padding: '1.2rem',
+                            fontSize: '1.5rem',
+                            fontWeight: 'bold',
+                            background: 'linear-gradient(to bottom, #f59e0b, #d97706)',
+                            border: 'none',
+                            borderRadius: '20px',
+                            color: 'white',
+                            boxShadow: '0 4px 0 #b45309, 0 10px 20px rgba(0,0,0,0.3)',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        👥 Arkadaşınla Oyna
+                    </button>
+
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
                             if (name.trim()) onStart(name, selectedAvatar, school, 'bot');
                         }}
                         style={{
@@ -309,6 +335,34 @@ export default function Menu({ userData, onStart, onShowLeaderboard, onShowTourn
                         💻 Bilgisayara Karşı
                     </button>
                     */}
+
+                    {/* Legal Links */}
+                    <div style={{
+                        display: 'flex',
+                        gap: '1rem',
+                        justifyContent: 'center',
+                        marginTop: '1rem',
+                        fontSize: '0.8rem',
+                        opacity: 0.7
+                    }}>
+                        <a
+                            href="https://math-games-6c136.web.app/privacy.html"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: 'white', textDecoration: 'none' }}
+                        >
+                            Gizlilik Politikası
+                        </a>
+                        <span>•</span>
+                        <a
+                            href="https://math-games-6c136.web.app/terms.html"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: 'white', textDecoration: 'none' }}
+                        >
+                            Kullanım Koşulları
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
