@@ -116,22 +116,40 @@ const generateAdvancedQuestions = (category) => {
             }
 
             case 'area_rectangle': {
-                // Area of rectangle
-                const width = Math.floor(Math.random() * 10) + 2;
-                const height = Math.floor(Math.random() * 10) + 2;
+                // Area of rectangle with difficulty levels
+                let width, height, shape;
+
+                // Difficulty affects size and complexity
+                if (Math.random() < 0.3) { // 30% chance for square
+                    const side = Math.floor(Math.random() * 12) + 3;
+                    width = side;
+                    height = side;
+                    shape = 'kare';
+                } else {
+                    // Rectangle with varying difficulty
+                    const minSize = 2;
+                    const maxSize = 15;
+                    width = Math.floor(Math.random() * (maxSize - minSize)) + minSize;
+                    height = Math.floor(Math.random() * (maxSize - minSize)) + minSize;
+                    shape = 'dikdörtgen';
+                }
 
                 answer = width * height;
-                displayText = `${width}cm × ${height}cm dikdörtgenin alanı? (cm²)`;
+                displayText = width === height
+                    ? `${width}cm kenar uzunluğundaki karenin alanı? (cm²)`
+                    : `${width}cm × ${height}cm dikdörtgenin alanı? (cm²)`;
 
                 options = new Set([
                     answer,
                     width + height, // Perimeter mistake
+                    2 * (width + height), // Double perimeter mistake
                     width * height + width,
-                    width * height - height
+                    width * height - height,
+                    Math.floor(width * height / 2) // Half area
                 ]);
 
                 while (options.size < 4) {
-                    options.add(Math.floor(Math.random() * 100) + 1);
+                    options.add(Math.floor(Math.random() * 150) + 1);
                 }
 
                 question = {
@@ -144,22 +162,64 @@ const generateAdvancedQuestions = (category) => {
             }
 
             case 'perimeter': {
-                // Perimeter of rectangle
-                const width = Math.floor(Math.random() * 10) + 2;
-                const height = Math.floor(Math.random() * 10) + 2;
+                // Perimeter with difficulty levels
+                let width, height, shape;
 
-                answer = 2 * (width + height);
-                displayText = `${width}cm × ${height}cm dikdörtgenin çevresi? (cm)`;
+                // Difficulty affects size and complexity
+                if (Math.random() < 0.3) { // 30% chance for square
+                    const side = Math.floor(Math.random() * 12) + 3;
+                    width = side;
+                    height = side;
+                    shape = 'kare';
+                } else if (Math.random() < 0.5) { // 50% chance for triangle
+                    // Equilateral triangle
+                    const side = Math.floor(Math.random() * 15) + 5;
+                    answer = 3 * side;
+                    displayText = `${side}cm kenar uzunluğundaki eşkenar üçgenin çevresi? (cm)`;
+
+                    options = new Set([
+                        answer,
+                        side * 2, // Two sides only
+                        side * 4, // Four sides
+                        Math.floor(side * 2.5),
+                        side + 10
+                    ]);
+
+                    while (options.size < 4) {
+                        options.add(Math.floor(Math.random() * 60) + 1);
+                    }
+
+                    question = {
+                        id: i,
+                        text: displayText,
+                        answer: String(answer),
+                        options: Array.from(options).sort(() => Math.random() - 0.5).map(String)
+                    };
+                    break;
+                } else {
+                    // Rectangle
+                    const minSize = 2;
+                    const maxSize = 15;
+                    width = Math.floor(Math.random() * (maxSize - minSize)) + minSize;
+                    height = Math.floor(Math.random() * (maxSize - minSize)) + minSize;
+                }
+
+                answer = width === height ? 4 * width : 2 * (width + height);
+                displayText = width === height
+                    ? `${width}cm kenar uzunluğundaki karenin çevresi? (cm)`
+                    : `${width}cm × ${height}cm dikdörtgenin çevresi? (cm)`;
 
                 options = new Set([
                     answer,
                     width * height, // Area mistake
-                    width + height,
-                    2 * width + height
+                    width + height, // Only two sides
+                    2 * width + height, // Missing one side
+                    width * 4, // Only one dimension
+                    height * 4
                 ]);
 
                 while (options.size < 4) {
-                    options.add(Math.floor(Math.random() * 50) + 1);
+                    options.add(Math.floor(Math.random() * 80) + 1);
                 }
 
                 question = {
@@ -259,20 +319,107 @@ const generateAdvancedQuestions = (category) => {
             }
 
             case 'patterns': {
-                // Number patterns
-                const start = Math.floor(Math.random() * 10) + 1;
-                const step = [2, 3, 5, 10][Math.floor(Math.random() * 4)];
-                const sequence = [start, start + step, start + 2 * step, start + 3 * step];
+                // Number patterns with varying difficulty
+                const patternType = Math.floor(Math.random() * 5);
 
-                answer = start + 4 * step;
-                displayText = `${sequence.join(', ')}, ?`;
+                switch (patternType) {
+                    case 0: {
+                        // Simple arithmetic sequence (easy)
+                        const start = Math.floor(Math.random() * 10) + 1;
+                        const step = [2, 3, 5, 10][Math.floor(Math.random() * 4)];
+                        const sequence = [start, start + step, start + 2 * step, start + 3 * step];
 
-                options = new Set([
-                    answer,
-                    answer + step,
-                    answer - step,
-                    answer + 1
-                ]);
+                        answer = start + 4 * step;
+                        displayText = `${sequence.join(', ')}, ?`;
+
+                        options = new Set([
+                            answer,
+                            answer + step,
+                            answer - step,
+                            answer + 1,
+                            start + 5 * step
+                        ]);
+                        break;
+                    }
+                    case 1: {
+                        // Decreasing sequence (medium)
+                        const start = Math.floor(Math.random() * 30) + 20;
+                        const step = [2, 3, 4, 5][Math.floor(Math.random() * 4)];
+                        const sequence = [start, start - step, start - 2 * step, start - 3 * step];
+
+                        answer = start - 4 * step;
+                        displayText = `${sequence.join(', ')}, ?`;
+
+                        options = new Set([
+                            answer,
+                            answer - step,
+                            answer + step,
+                            start - 5 * step,
+                            Math.floor(answer / 2)
+                        ]);
+                        break;
+                    }
+                    case 2: {
+                        // Multiplication pattern (medium-hard)
+                        const start = [2, 3, 4, 5][Math.floor(Math.random() * 4)];
+                        const multiplier = 2;
+                        const sequence = [start, start * multiplier, start * multiplier * multiplier, start * multiplier * multiplier * multiplier];
+
+                        answer = start * Math.pow(multiplier, 4);
+                        displayText = `${sequence.join(', ')}, ?`;
+
+                        options = new Set([
+                            answer,
+                            answer * 2,
+                            answer / 2,
+                            sequence[3] + start,
+                            sequence[3] * 3
+                        ]);
+                        break;
+                    }
+                    case 3: {
+                        // Alternating add/subtract (hard)
+                        const start = Math.floor(Math.random() * 10) + 5;
+                        const add = [3, 5, 7][Math.floor(Math.random() * 3)];
+                        const subtract = [2, 4][Math.floor(Math.random() * 2)];
+                        const sequence = [
+                            start,
+                            start + add,
+                            start + add - subtract,
+                            start + add - subtract + add
+                        ];
+
+                        answer = start + add - subtract + add - subtract;
+                        displayText = `${sequence.join(', ')}, ?`;
+
+                        options = new Set([
+                            answer,
+                            answer + add,
+                            answer - subtract,
+                            sequence[3] + add,
+                            sequence[3] - subtract
+                        ]);
+                        break;
+                    }
+                    case 4: {
+                        // Fibonacci-like (hard)
+                        const a = Math.floor(Math.random() * 5) + 1;
+                        const b = Math.floor(Math.random() * 5) + 1;
+                        const sequence = [a, b, a + b, a + 2 * b];
+
+                        answer = 2 * a + 3 * b;
+                        displayText = `${sequence.join(', ')}, ?`;
+
+                        options = new Set([
+                            answer,
+                            sequence[3] + a,
+                            sequence[3] + b,
+                            sequence[3] * 2,
+                            a + 3 * b
+                        ]);
+                        break;
+                    }
+                }
 
                 while (options.size < 4) {
                     options.add(Math.floor(Math.random() * 100) + 1);
@@ -282,7 +429,7 @@ const generateAdvancedQuestions = (category) => {
                     id: i,
                     text: displayText,
                     answer: String(answer),
-                    options: Array.from(options).sort(() => Math.random() - 0.5).map(String)
+                    options: Array.from(options).filter(o => o > 0).slice(0, 4).sort(() => Math.random() - 0.5).map(String)
                 };
                 break;
             }
