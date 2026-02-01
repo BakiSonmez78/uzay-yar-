@@ -1,18 +1,24 @@
 {
   "project_info": {
     "project_number": "465831207808",
+    "firebase_url": "https://math-games-6c136-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "math-games-6c136",
     "storage_bucket": "math-games-6c136.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:465831207808:android:3a1be8e66d949df44b9765",
+        "mobilesdk_app_id": "1:465831207808:android:7dc35084e1431eab4b9765",
         "android_client_info": {
           "package_name": "com.yazgames.mathrace"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "465831207808-4981mcjte48nn17mf83gq7qthp1ki1ki.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBCgeKm8SSpVsCnqTyrQKEUgaWvXlVJ3Wk"
@@ -20,7 +26,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "465831207808-4981mcjte48nn17mf83gq7qthp1ki1ki.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
