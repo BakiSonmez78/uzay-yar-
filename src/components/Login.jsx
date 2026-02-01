@@ -1,39 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signInAnonymously } from 'firebase/auth';
-import { Capacitor } from '@capacitor/core';
+import React, { useState } from 'react';
+import { getAuth, signInWithPopup, GoogleAuthProvider, signInAnonymously } from 'firebase/auth';
 
 export default function Login({ onLoginSuccess }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const auth = getAuth();
-    const isNative = Capacitor.isNativePlatform();
-
-    // Check for redirect result on mount (for mobile)
-    useEffect(() => {
-        const checkRedirectResult = async () => {
-            try {
-                const result = await getRedirectResult(auth);
-                if (result && result.user) {
-                    console.log('[Login] Redirect result found:', result.user.email);
-                    onLoginSuccess({
-                        name: result.user.displayName || 'Google User',
-                        avatar: '👤',
-                        email: result.user.email,
-                        uid: result.user.uid,
-                        isGuest: false
-                    });
-                }
-            } catch (err) {
-                console.error('[Login] Redirect result error:', err);
-                setError('Google girişi başarısız. Lütfen tekrar deneyin.');
-            }
-        };
-
-        if (isNative) {
-            checkRedirectResult();
-        }
-    }, [auth, isNative, onLoginSuccess]);
 
     const handleGoogleLogin = async () => {
         setLoading(true);
@@ -41,28 +13,38 @@ export default function Login({ onLoginSuccess }) {
         try {
             const provider = new GoogleAuthProvider();
 
-            if (isNative) {
-                // Mobile: Use redirect
-                console.log('[Login] Using signInWithRedirect for mobile');
-                await signInWithRedirect(auth, provider);
-                // Result will be handled in useEffect after redirect
-            } else {
-                // Web: Use popup
-                console.log('[Login] Using signInWithPopup for web');
-                const result = await signInWithPopup(auth, provider);
-                const user = result.user;
+            // Force account selection every time
+            provider.setCustomParameters({
+                prompt: 'select_account'
+            });
 
-                onLoginSuccess({
-                    name: user.displayName || 'Google User',
-                    avatar: '👤',
-                    email: user.email,
-                    uid: user.uid,
-                    isGuest: false
-                });
-            }
+            console.log('[Login] Starting Google Sign-In...');
+            const result = await signInWithPopup(auth, provider);
+            const user = result.user;
+
+            console.log('[Login] Sign-in successful:', user.email);
+            onLoginSuccess({
+                name: user.displayName || 'Google User',
+                avatar: '👤',
+                email: user.email,
+                uid: user.uid,
+                isGuest: false
+            });
         } catch (err) {
-            console.error('Google login error:', err);
-            setError('Google girişi başarısız. Lütfen tekrar deneyin.');
+            console.error('[Login] Google login error:', err);
+            console.error('[Login] Error code:', err.code);
+            console.error('[Login] Error message:', err.message);
+
+            // More specific error messages
+            if (err.code === 'auth/popup-closed-by-user') {
+                setError('Giriş penceresi kapatıldı. Lütfen tekrar deneyin.');
+            } else if (err.code === 'auth/popup-blocked') {
+                setError('Popup engellendi. Lütfen tarayıcı ayarlarınızı kontrol edin.');
+            } else if (err.code === 'auth/cancelled-popup-request') {
+                setError('Giriş iptal edildi.');
+            } else {
+                setError('Google girişi başarısız. Lütfen tekrar deneyin.');
+            }
             setLoading(false);
         }
     };
