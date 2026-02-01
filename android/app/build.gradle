@@ -51,6 +51,10 @@ dependencies {
 
     // 🔥 YENİ EKLENEN SERVİS: Realtime Database 🔥
     implementation("com.google.firebase:firebase-database")
+    
+    // 🔥 Firebase Authentication & Google Sign-In 🔥
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
 }
 
 apply from: 'capacitor.build.gradle'
