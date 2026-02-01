@@ -7,14 +7,25 @@ export default function PrivateRoom({ socket, userData, onBack, onRoomCreated, o
     const [waiting, setWaiting] = useState(false);
     const [error, setError] = useState('');
     const [selectedGameMode, setSelectedGameMode] = useState('+');
+    const [activeTab, setActiveTab] = useState('basic'); // 'basic' or 'advanced'
 
     const gameModes = [
-        { id: '+', label: 'Toplama', icon: '+' },
-        { id: '-', label: 'Çıkartma', icon: '-' },
-        { id: '*', label: 'Çarpma', icon: '×' },
-        { id: '/', label: 'Bölme', icon: '÷' },
-        { id: 'mixed', label: 'Karışık', icon: '?' },
+        { id: '+', label: 'Toplama', icon: '+', category: 'basic' },
+        { id: '-', label: 'Çıkartma', icon: '-', category: 'basic' },
+        { id: '*', label: 'Çarpma', icon: '×', category: 'basic' },
+        { id: '/', label: 'Bölme', icon: '÷', category: 'basic' },
+        { id: 'mixed', label: 'Karışık', icon: '?', category: 'basic' },
+        { id: 'fractions_add', label: 'Kesir Toplama', icon: '½+¼', category: 'advanced' },
+        { id: 'fractions_compare', label: 'Kesir Karşılaştırma', icon: '½>¼', category: 'advanced' },
+        { id: 'percentages', label: 'Yüzdeler', icon: '%', category: 'advanced' },
+        { id: 'area_rectangle', label: 'Alan', icon: '□', category: 'advanced' },
+        { id: 'perimeter', label: 'Çevre', icon: '⬜', category: 'advanced' },
+        { id: 'word_problems', label: 'Sözel Problemler', icon: '📝', category: 'advanced' },
+        { id: 'time', label: 'Saat', icon: '🕐', category: 'advanced' },
+        { id: 'patterns', label: 'Örüntüler', icon: '🔢', category: 'advanced' },
     ];
+
+    const activeModes = gameModes.filter(m => m.category === activeTab);
 
     useEffect(() => {
         // Listen for room creation
@@ -211,22 +222,95 @@ export default function PrivateRoom({ socket, userData, onBack, onRoomCreated, o
 
                 <div style={{ marginBottom: '2rem' }}>
                     <p style={{ marginBottom: '1rem', fontWeight: 'bold' }}>Oyun Modu:</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                        {gameModes.map(mode => (
+
+                    {/* Tab Navigation */}
+                    <div style={{
+                        display: 'flex',
+                        gap: '0.5rem',
+                        marginBottom: '1rem',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        padding: '0.3rem',
+                        borderRadius: '12px'
+                    }}>
+                        <button
+                            onClick={() => {
+                                setActiveTab('basic');
+                                setSelectedGameMode('+'); // Reset to first basic mode
+                            }}
+                            style={{
+                                flex: 1,
+                                padding: '0.6rem 1rem',
+                                background: activeTab === 'basic'
+                                    ? 'linear-gradient(135deg, #3b82f6, #2563eb)'
+                                    : 'transparent',
+                                border: 'none',
+                                borderRadius: '10px',
+                                color: 'white',
+                                fontWeight: activeTab === 'basic' ? 'bold' : 'normal',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                fontSize: '0.9rem',
+                                boxShadow: activeTab === 'basic' ? '0 4px 12px rgba(59, 130, 246, 0.4)' : 'none'
+                            }}
+                        >
+                            ➕ 4 İşlem
+                        </button>
+                        <button
+                            onClick={() => {
+                                setActiveTab('advanced');
+                                setSelectedGameMode('fractions_add'); // Reset to first advanced mode
+                            }}
+                            style={{
+                                flex: 1,
+                                padding: '0.6rem 1rem',
+                                background: activeTab === 'advanced'
+                                    ? 'linear-gradient(135deg, #10b981, #059669)'
+                                    : 'transparent',
+                                border: 'none',
+                                borderRadius: '10px',
+                                color: 'white',
+                                fontWeight: activeTab === 'advanced' ? 'bold' : 'normal',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                fontSize: '0.9rem',
+                                boxShadow: activeTab === 'advanced' ? '0 4px 12px rgba(16, 185, 129, 0.4)' : 'none'
+                            }}
+                        >
+                            🎓 İleri Seviye
+                        </button>
+                    </div>
+
+                    {/* Mode Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.5rem' }}>
+                        {activeModes.map(mode => (
                             <button
                                 key={mode.id}
                                 onClick={() => setSelectedGameMode(mode.id)}
                                 className={selectedGameMode === mode.id ? 'primary' : 'secondary'}
                                 style={{
-                                    padding: '1rem',
+                                    padding: '1rem 0.5rem',
                                     display: 'flex',
                                     flexDirection: 'column',
                                     alignItems: 'center',
-                                    gap: '0.5rem'
+                                    gap: '0.5rem',
+                                    background: selectedGameMode === mode.id
+                                        ? (activeTab === 'basic'
+                                            ? 'linear-gradient(135deg, #3b82f6, #2563eb)'
+                                            : 'linear-gradient(135deg, #10b981, #059669)')
+                                        : (activeTab === 'basic'
+                                            ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1))'
+                                            : 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1))'),
+                                    border: selectedGameMode === mode.id
+                                        ? 'none'
+                                        : (activeTab === 'basic'
+                                            ? '1px solid rgba(59, 130, 246, 0.3)'
+                                            : '1px solid rgba(16, 185, 129, 0.3)'),
+                                    borderRadius: '10px',
+                                    minHeight: '90px'
                                 }}
                             >
-                                <span style={{ fontSize: '1.5rem' }}>{mode.icon}</span>
-                                <span style={{ fontSize: '0.9rem' }}>{mode.label}</span>
+                                <span style={{ fontSize: '1.8rem' }}>{mode.icon}</span>
+                                <span style={{ fontSize: '0.85rem', textAlign: 'center' }}>{mode.label}</span>
                             </button>
                         ))}
                     </div>
