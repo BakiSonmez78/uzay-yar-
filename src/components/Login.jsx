@@ -1,27 +1,65 @@
-import React, { useState } from 'react';
-import { getAuth, signInWithPopup, GoogleAuthProvider, signInAnonymously } from 'firebase/auth';
+import React, { useState, useEffect } from 'react';
+import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signInAnonymously } from 'firebase/auth';
+import { Capacitor } from '@capacitor/core';
 
 export default function Login({ onLoginSuccess }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const auth = getAuth();
+    const isNative = Capacitor.isNativePlatform();
+
+    // Check for redirect result on mount (for mobile)
+    useEffect(() => {
+        const checkRedirectResult = async () => {
+            try {
+                const result = await getRedirectResult(auth);
+                if (result && result.user) {
+                    console.log('[Login] Redirect result found:', result.user.email);
+                    onLoginSuccess({
+                        name: result.user.displayName || 'Google User',
+                        avatar: '👤',
+                        email: result.user.email,
+                        uid: result.user.uid,
+                        isGuest: false
+                    });
+                }
+            } catch (err) {
+                console.error('[Login] Redirect result error:', err);
+                setError('Google girişi başarısız. Lütfen tekrar deneyin.');
+            }
+        };
+
+        if (isNative) {
+            checkRedirectResult();
+        }
+    }, [auth, isNative, onLoginSuccess]);
 
     const handleGoogleLogin = async () => {
         setLoading(true);
         setError('');
         try {
             const provider = new GoogleAuthProvider();
-            const result = await signInWithPopup(auth, provider);
-            const user = result.user;
 
-            onLoginSuccess({
-                name: user.displayName || 'Google User',
-                avatar: '👤',
-                email: user.email,
-                uid: user.uid,
-                isGuest: false
-            });
+            if (isNative) {
+                // Mobile: Use redirect
+                console.log('[Login] Using signInWithRedirect for mobile');
+                await signInWithRedirect(auth, provider);
+                // Result will be handled in useEffect after redirect
+            } else {
+                // Web: Use popup
+                console.log('[Login] Using signInWithPopup for web');
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+
+                onLoginSuccess({
+                    name: user.displayName || 'Google User',
+                    avatar: '👤',
+                    email: user.email,
+                    uid: user.uid,
+                    isGuest: false
+                });
+            }
         } catch (err) {
             console.error('Google login error:', err);
             setError('Google girişi başarısız. Lütfen tekrar deneyin.');
@@ -69,7 +107,7 @@ export default function Login({ onLoginSuccess }) {
             padding: '3rem'
         }}>
             <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>🚀</h1>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Matematik Uzay Yarışı</h2>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Astromath</h2>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.8rem' }}>
                 Versiyon: 1.0.5
             </p>
