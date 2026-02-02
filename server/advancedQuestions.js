@@ -75,7 +75,8 @@ const generateAdvancedQuestions = (category) => {
                 displayText = `${formatFraction(num1, den1)} ___ ${formatFraction(num2, den2)}`;
                 answer = symbol;
 
-                options = new Set(['>', '<', '=']);
+                // Always 4 options for consistency
+                options = new Set(['>', '<', '=', '≠']);
 
                 question = {
                     id: i,
@@ -156,7 +157,7 @@ const generateAdvancedQuestions = (category) => {
                     id: i,
                     text: displayText,
                     answer: String(answer),
-                    options: Array.from(options).sort(() => Math.random() - 0.5).map(String)
+                    options: Array.from(options).slice(0, 4).sort(() => Math.random() - 0.5).map(String)
                 };
                 break;
             }
@@ -226,7 +227,7 @@ const generateAdvancedQuestions = (category) => {
                     id: i,
                     text: displayText,
                     answer: String(answer),
-                    options: Array.from(options).sort(() => Math.random() - 0.5).map(String)
+                    options: Array.from(options).slice(0, 4).sort(() => Math.random() - 0.5).map(String)
                 };
                 break;
             }

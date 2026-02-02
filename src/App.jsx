@@ -97,7 +97,7 @@ function App() {
         const isGoogleUser = user.providerData.some(p => p.providerId === 'google.com');
 
         if (isGoogleUser) {
-          // Restore Google user
+          // Restore Google user data but keep on welcome screen
           setUserData({
             name: user.displayName || 'Google User',
             avatar: '👤',
@@ -107,7 +107,7 @@ function App() {
             school: '' // Could be loaded from Firestore if saved
           });
           setIsAuthenticated(true);
-          setGameState('welcome'); // Always show splash screen first, even for returning users
+          // DON'T change gameState - let Welcome screen show first
         } else {
           // Anonymous user - don't auto-restore (they get new session each time)
           console.log('[Auth] Anonymous user detected, requiring fresh login');
@@ -191,20 +191,42 @@ function App() {
   };
 
   const handleSelectMode = (mode, matchType, botDifficulty = 'medium') => {
-    console.log('[Matchmaking] handleSelectMode called:', { mode, matchType, botDifficulty });
-    console.log('[Matchmaking] Socket connected:', socket.connected);
-    console.log('[Matchmaking] User data:', userData);
+    console.log('[Game Start] handleSelectMode called:', { mode, matchType, botDifficulty });
 
     setGameMode(mode);
+
+    // BOT GAME: Start immediately without matchmaking
+    if (matchType === 'bot') {
+      console.log('[Bot Game] Starting bot game immediately');
+      soundManager.stopMusic();
+
+      const queueData = {
+        name: userData.name,
+        avatar: userData.avatar,
+        mode,
+        matchType: 'bot',
+        botDifficulty,
+        playerId: playerIdRef.current
+      };
+
+      // Request bot game from server
+      getSocket().emit('join_queue', queueData);
+
+      // Server will respond with match_found immediately for bot games
+      setGameState('matchmaking'); // Brief loading state
+      return;
+    }
+
+    // HUMAN GAME: Go through matchmaking
+    console.log('[Online Game] Starting matchmaking');
     setGameState('matchmaking');
 
     const queueData = {
       name: userData.name,
       avatar: userData.avatar,
       mode,
-      matchType,
-      botDifficulty,
-      playerId: playerIdRef.current // Send Stable ID
+      matchType: 'human',
+      playerId: playerIdRef.current
     };
 
     console.log('[Matchmaking] Emitting join_queue:', queueData);
@@ -273,8 +295,13 @@ function App() {
   };
 
   const handleEnterGame = () => {
-    console.log("App: handleEnterGame called. Switching to 'login'");
-    setGameState('login');
+    console.log("App: handleEnterGame called. isAuthenticated:", isAuthenticated);
+    // If already authenticated (returning user), go straight to menu
+    if (isAuthenticated) {
+      setGameState('menu');
+    } else {
+      setGameState('login');
+    }
   };
 
   const handleLoginSuccess = (user) => {
