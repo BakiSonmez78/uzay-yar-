@@ -104,7 +104,7 @@ function App() {
           // Restore Google user data but keep on welcome screen
           setUserData({
             name: user.displayName || 'Google User',
-            avatar: '👤',
+            avatar: localStorage.getItem('selectedAvatar') || '👤',
             email: user.email,
             uid: user.uid,
             isGuest: false,
@@ -429,7 +429,10 @@ function App() {
       {gameState === 'welcome' && <Welcome onStart={handleEnterGame} />}
       {gameState === 'login' && <Login onLoginSuccess={handleLoginSuccess} />}
       {gameState === 'onboarding' && <Onboarding onFinish={() => setGameState('menu')} />}
-      {gameState === 'menu' && <Menu userData={userData} onStart={handleStart} onShowLeaderboard={handleShowLeaderboard} onShowTournament={handleShowTournament} onShowPrivateRoom={handleShowPrivateRoom} totalScore={userTotalScore} onLogout={handleLogout} />}
+      {gameState === 'menu' && <Menu userData={userData} onStart={handleStart} onShowLeaderboard={handleShowLeaderboard} onShowTournament={handleShowTournament} onShowPrivateRoom={handleShowPrivateRoom} totalScore={userTotalScore} onLogout={handleLogout} onAvatarChange={(newAvatar) => {
+        setUserData(prev => ({ ...prev, avatar: newAvatar }));
+        localStorage.setItem('selectedAvatar', newAvatar);
+      }} />}
 
       {gameState === 'private_room' && (
         <PrivateRoom
@@ -491,14 +494,14 @@ function App() {
           myCountry={Object.values(gameData.players).find(p => p.name === userData.name)?.country}
           onFinish={handleFinish}
           onQuit={() => {
+            // Tell server so opponent gets the win
             getSocket().emit('leave_game', { roomId: gameData.roomId });
-            // Don't navigate away immediately - let the game_forfeit_loss
-            // event from server trigger the results screen via handleFinish.
-            // But as a fallback, if no event received in 2s, go to menu
-            setTimeout(() => {
-              // Only force menu if we're still in playing state (no forfeit event received)
-              setGameState(prev => prev === 'playing' ? 'menu' : prev);
-            }, 2000);
+            // Set defeat states directly (bypass async handleFinish)
+            setFinalScore(0);
+            setOpponentScore(Math.max(50, opponentScore || 0));
+            setGameResultOutcome('you_left');
+            setGameStats(null);
+            setGameState('results');
           }}
           startTime={gameData.startTime}
           duration={gameData.duration || 90}

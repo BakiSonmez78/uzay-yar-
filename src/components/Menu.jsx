@@ -40,7 +40,7 @@ const getProgress = (xp) => {
     return Math.min(100, Math.round((rangeCurrent / rangeTotal) * 100));
 };
 
-export default function Menu({ userData, onStart, onShowLeaderboard, onShowTournament, onShowPrivateRoom, totalScore, onLogout }) {
+export default function Menu({ userData, onStart, onShowLeaderboard, onShowTournament, onShowPrivateRoom, totalScore, onLogout, onAvatarChange }) {
     const [name, setName] = useState(userData?.name || '');
     const [selectedAvatar, setSelectedAvatar] = useState(userData?.avatar || '⭐');
     const [school, setSchool] = useState(userData?.school || '');
@@ -392,7 +392,10 @@ export default function Menu({ userData, onStart, onShowLeaderboard, onShowTourn
                     xp={xp}
                     userName={name}
                     avatar={selectedAvatar}
-                    onAvatarChange={(a) => setSelectedAvatar(a)}
+                    onAvatarChange={(a) => {
+                        setSelectedAvatar(a);
+                        if (onAvatarChange) onAvatarChange(a);
+                    }}
                 />
             )}
 

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getLang, setLang, t } from '../utils/i18n';
 
 // ---- Stats helpers ----
 export function getLifetimeStats() {
@@ -79,6 +80,7 @@ export default function Profile({ onClose, rankName, xp, userName, avatar, onAva
 
     const [tab, setTab] = useState('stats');
     const [showAvatars, setShowAvatars] = useState(false);
+    const [currentLang, setCurrentLang] = useState(getLang());
 
     const currentAnimal = getAnimalById(avatar);
 
@@ -111,14 +113,41 @@ export default function Profile({ onClose, rankName, xp, userName, avatar, onAva
             }}>
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <h2 style={{ margin: 0, fontSize: 'clamp(1.2rem, 3vw, 1.6rem)', fontWeight: '800' }}>📊 Profilim</h2>
-                    <button onClick={onClose} style={{
-                        background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white',
-                        width: '32px', height: '32px', borderRadius: '50%',
-                        cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        flexShrink: 0
-                    }}>✕</button>
+                    <h2 style={{ margin: 0, fontSize: 'clamp(1.2rem, 3vw, 1.6rem)', fontWeight: '800' }}>📊 {currentLang === 'tr' ? 'Profilim' : 'My Profile'}</h2>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {/* Language Flags */}
+                        {[{ code: 'tr', src: 'https://flagcdn.com/w40/tr.png', alt: 'Türkçe' }, { code: 'en', src: 'https://flagcdn.com/w40/gb.png', alt: 'English' }].map(lang => (
+                            <button key={lang.code}
+                                onClick={() => { setLang(lang.code); setCurrentLang(lang.code); }}
+                                title={lang.alt}
+                                style={{
+                                    width: '38px', height: '38px', borderRadius: '50%',
+                                    background: currentLang === lang.code
+                                        ? 'rgba(99,102,241,0.3)'
+                                        : 'rgba(255,255,255,0.06)',
+                                    border: currentLang === lang.code
+                                        ? '2.5px solid #818cf8'
+                                        : '2.5px solid transparent',
+                                    cursor: 'pointer', padding: '0',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    transition: 'all 0.2s', overflow: 'hidden',
+                                    boxShadow: currentLang === lang.code
+                                        ? '0 0 12px rgba(99,102,241,0.4)'
+                                        : 'none'
+                                }}
+                            >
+                                <img src={lang.src} alt={lang.alt} style={{ width: '24px', height: '16px', objectFit: 'cover', borderRadius: '2px' }} />
+                            </button>
+                        ))}
+                        {/* Close */}
+                        <button onClick={onClose} style={{
+                            background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white',
+                            width: '32px', height: '32px', borderRadius: '50%',
+                            cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            flexShrink: 0, marginLeft: '4px'
+                        }}>✕</button>
+                    </div>
                 </div>
 
                 {/* Welcome Card */}
@@ -294,9 +323,11 @@ export default function Profile({ onClose, rankName, xp, userName, avatar, onAva
                         textAlign: 'center', fontSize: '0.7rem',
                         opacity: 0.4, marginTop: '16px'
                     }}>
-                        🗓️ İlk oyun: {new Date(stats.firstPlayDate).toLocaleDateString('tr-TR')}
+                        🗓️ {currentLang === 'tr' ? 'İlk oyun' : 'First game'}: {new Date(stats.firstPlayDate).toLocaleDateString(currentLang === 'tr' ? 'tr-TR' : 'en-US')}
                     </div>
                 )}
+
+
             </div>
         </div>
     );

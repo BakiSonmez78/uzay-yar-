@@ -117,16 +117,34 @@ export default function Login({ onLoginSuccess }) {
                 {t('login_version')}
             </p>
 
-            {/* Language Toggle - centered pill */}
-            <button onClick={() => { toggleLang(); setLangState(getLang() === 'tr' ? 'en' : 'tr'); }} style={{
-                background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
-                borderRadius: '20px', padding: '6px 18px', color: 'rgba(255,255,255,0.7)',
-                fontSize: '0.8rem', fontWeight: '600', cursor: 'pointer',
-                display: 'inline-flex', alignItems: 'center', gap: '6px',
-                marginBottom: '1.5rem', transition: 'all 0.2s'
-            }}>
-                {lang === 'tr' ? '🇬🇧 English' : '🇹🇷 Türkçe'}
-            </button>
+            {/* Language Toggle - flag buttons */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '1.5rem' }}>
+                {[{ code: 'tr', src: 'https://flagcdn.com/w40/tr.png', alt: 'Türkçe' }, { code: 'en', src: 'https://flagcdn.com/w40/gb.png', alt: 'English' }].map(l => (
+                    <button key={l.code}
+                        onClick={() => { 
+                            if (lang !== l.code) { toggleLang(); setLangState(l.code); }
+                        }}
+                        title={l.alt}
+                        style={{
+                            width: '42px', height: '42px', borderRadius: '50%',
+                            background: lang === l.code
+                                ? 'rgba(99,102,241,0.3)'
+                                : 'rgba(255,255,255,0.06)',
+                            border: lang === l.code
+                                ? '2.5px solid #818cf8'
+                                : '2.5px solid rgba(255,255,255,0.15)',
+                            cursor: 'pointer', padding: '0',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            transition: 'all 0.2s', overflow: 'hidden',
+                            boxShadow: lang === l.code
+                                ? '0 0 14px rgba(99,102,241,0.4)'
+                                : 'none'
+                        }}
+                    >
+                        <img src={l.src} alt={l.alt} style={{ width: '26px', height: '18px', objectFit: 'cover', borderRadius: '2px' }} />
+                    </button>
+                ))}
+            </div>
 
             <p style={{ color: 'var(--text-secondary)', marginBottom: '3rem' }}>
                 {t('login_subtitle')}

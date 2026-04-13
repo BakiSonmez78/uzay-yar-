@@ -680,9 +680,15 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
                                 ? 'linear-gradient(135deg, #22c55e, #16a34a)'
                                 : feedback === 'wrong'
                                     ? 'linear-gradient(135deg, #ef4444, #dc2626)'
-                                    : `linear-gradient(135deg, ${myAnimal.color}66, ${myAnimal.color}33)`,
+                                    : opponentFeedback === 'correct'
+                                        ? 'linear-gradient(135deg, #ef4444, #dc2626)'
+                                        : opponentFeedback === 'wrong'
+                                            ? 'linear-gradient(135deg, #22c55e, #16a34a)'
+                                            : `linear-gradient(135deg, ${myAnimal.color}66, ${myAnimal.color}33)`,
                             border: feedback === 'correct' ? '4px solid #4ade80'
                                 : feedback === 'wrong' ? '4px solid #f87171'
+                                : opponentFeedback === 'correct' ? '4px solid #f87171'
+                                : opponentFeedback === 'wrong' ? '4px solid #4ade80'
                                 : `4px solid ${myAnimal.color}88`,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: 'clamp(2rem, 6vw, 4rem)',
@@ -690,10 +696,16 @@ export default function Game({ questions, opponent, opponentScore, socket, roomI
                                 ? '0 0 25px rgba(74,222,128,0.6), 0 0 50px rgba(74,222,128,0.2)'
                                 : feedback === 'wrong'
                                     ? '0 0 25px rgba(239,68,68,0.6), 0 0 50px rgba(239,68,68,0.2)'
-                                    : `0 4px 20px ${myAnimal.color}44`,
+                                    : opponentFeedback === 'correct'
+                                        ? '0 0 25px rgba(239,68,68,0.6)'
+                                        : opponentFeedback === 'wrong'
+                                            ? '0 0 25px rgba(74,222,128,0.6)'
+                                            : `0 4px 20px ${myAnimal.color}44`,
                             transition: 'background 0.3s, border 0.3s, box-shadow 0.3s',
                             animation: feedback === 'correct' ? 'avatarBounce 0.6s ease'
                                 : feedback === 'wrong' ? 'avatarSad 0.5s ease'
+                                : opponentFeedback === 'correct' ? 'avatarSad 0.5s ease'
+                                : opponentFeedback === 'wrong' ? 'avatarBounce 0.6s ease'
                                 : `${myAnimal.idle} 2s ease-in-out infinite`
                         }}>
                             {myAnimal.emoji}
