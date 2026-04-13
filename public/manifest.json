@@ -1,0 +1,22 @@
+{
+  "name": "Astromath - Matematik Yarışı",
+  "short_name": "Astromath",
+  "description": "Online matematik yarışı oyunu. Gerçek rakiplerle yarış, hayvan avatarını seç ve eğlen!",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#6366f1",
+  "lang": "tr",
+  "categories": ["games", "education"],
+  "icons": [
+    {
+      "src": "/icon-512.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}

@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "465831207808-a4p1cl8u9dt61n4a9jvjh2jsq9n89lgl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.yazgames.mathrace",
+            "certificate_hash": "064dc40fc33d5beb4ab11f5298fd6dc8461d8512"
+          }
+        },
+        {
           "client_id": "465831207808-4981mcjte48nn17mf83gq7qthp1ki1ki.apps.googleusercontent.com",
           "client_type": 3
         }

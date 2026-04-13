@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astromath - İndir</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            color: white; min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .container {
+            max-width: 480px; width: 90%; text-align: center; padding: 2rem;
+        }
+        .logo {
+            width: 140px; height: 140px; border-radius: 28px;
+            box-shadow: 0 12px 40px rgba(99,102,241,0.4);
+            margin-bottom: 1.5rem;
+        }
+        h1 { font-size: 2rem; margin-bottom: 0.3rem; }
+        .subtitle { color: #94a3b8; margin-bottom: 2rem; font-size: 0.95rem; }
+        .btn {
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            width: 100%; padding: 16px 24px; border-radius: 16px;
+            font-size: 1.1rem; font-weight: 700; border: none;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            margin-bottom: 12px;
+        }
+        .btn-apk {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white; box-shadow: 0 4px 20px rgba(34,197,94,0.3);
+        }
+        .btn-apk:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(34,197,94,0.4); }
+        .btn-web {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white; box-shadow: 0 4px 20px rgba(99,102,241,0.3);
+        }
+        .btn-web:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,0.4); }
+        .btn-pwa {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white; box-shadow: 0 4px 20px rgba(245,158,11,0.3);
+        }
+        .btn-pwa:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(245,158,11,0.4); }
+        .icon { font-size: 1.5rem; }
+        .info {
+            margin-top: 1.5rem; padding: 1rem; border-radius: 12px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.8rem; color: #94a3b8; line-height: 1.6;
+        }
+        .divider { display: flex; align-items: center; gap: 12px; margin: 1.5rem 0; color: #64748b; font-size: 0.85rem; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.1); }
+        .features {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+            margin: 1.5rem 0; text-align: left;
+        }
+        .feature {
+            padding: 10px 12px; border-radius: 10px;
+            background: rgba(255,255,255,0.05); font-size: 0.8rem;
+        }
+        .feature span { font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="/icon-512.jpg" alt="Astromath" class="logo">
+        <h1>Astromath</h1>
+        <p class="subtitle">Online Matematik Yarışı Oyunu</p>
+
+        <div class="features">
+            <div class="feature"><span>🎮</span> Online Yarış</div>
+            <div class="feature"><span>🐱</span> Hayvan Avatarları</div>
+            <div class="feature"><span>🏆</span> Liderlik Tablosu</div>
+            <div class="feature"><span>👹</span> Boss Savaşları</div>
+        </div>
+
+        <a href="/astromath-apk.zip" class="btn btn-apk" download>
+            <span class="icon">📱</span>
+            Android APK İndir (10.5 MB)
+        </a>
+
+        <a href="/" class="btn btn-web">
+            <span class="icon">🌐</span>
+            Tarayıcıda Oyna
+        </a>
+
+        <div class="divider">veya</div>
+
+        <a href="/" class="btn btn-pwa" id="pwaBtn" onclick="showPwaGuide(event)">
+            <span class="icon">⬇️</span>
+            Ana Ekrana Ekle (PWA)
+        </a>
+
+        <div class="info">
+            <strong>📱 APK Kurulumu:</strong> ZIP dosyasını indirip açın → APK dosyasına tıklayın → "Bilinmeyen kaynaklara izin ver" → Kur.<br><br>
+            <strong>⬇️ PWA:</strong> Tarayıcıda açın → Menü (⋮) → "Ana ekrana ekle" seçin. Uygulama gibi çalışır!
+        </div>
+
+        <div style="margin-top: 1.5rem; font-size: 0.7rem; color: #475569;">
+            <a href="/privacy.html" style="color: #64748b; text-decoration: none;">Gizlilik Politikası</a> · 
+            <a href="/terms.html" style="color: #64748b; text-decoration: none;">Kullanım Koşulları</a>
+        </div>
+    </div>
+
+    <script>
+        function showPwaGuide(e) {
+            e.preventDefault();
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isAndroid = /Android/.test(navigator.userAgent);
+            if (isIOS) {
+                alert('Safari\'de açın → Paylaş butonu (⬆️) → "Ana Ekrana Ekle" seçin');
+            } else if (isAndroid) {
+                alert('Chrome\'da açın → Menü (⋮) → "Ana ekrana ekle" veya "Uygulamayı yükle" seçin');
+            } else {
+                alert('Adres çubuğundaki yükleme simgesine (⬇️) tıklayın veya Menü → "Uygulamayı yükle" seçin');
+            }
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@ class SoundManager {
         // Sound effects - reliable sources
         this.correctSound = new Audio('https://ia801609.us.archive.org/16/items/ApplauseSound/Applause.mp3'); // Applause sound
         this.wrongSound = new Audio('https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/explosion_02.wav'); // Explosion/error
-        this.bgMusic = new Audio('https://codeskulptor-demos.commondatastorage.googleapis.com/descent/background%20music.mp3'); // Adventure music
+        this.bgMusic = new Audio('/audio/astro.mp3');
 
         // Preload
         this.correctSound.load();
@@ -14,6 +14,7 @@ class SoundManager {
         this.bgMusic.loop = true;
         this.correctSound.volume = 0.7;
         this.wrongSound.volume = 0.8;
+        this.bgMusic.volume = 0.4;
 
         // Persist settings
         this.musicMuted = localStorage.getItem('musicMuted') === 'true';

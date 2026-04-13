@@ -12,6 +12,9 @@ import Matchmaking from './components/Matchmaking';
 import Leaderboard from './components/Leaderboard';
 import Tournament from './components/Tournament';
 import PrivateRoom from './components/PrivateRoom';
+import Onboarding, { needsOnboarding } from './components/Onboarding';
+import { updateQuestProgress } from './components/DailyQuests';
+import { updateLifetimeStats } from './components/Profile';
 import VConsole from 'vconsole';
 
 // Init vConsole for mobile debugging
@@ -73,6 +76,7 @@ function App() {
   const [opponentScore, setOpponentScore] = useState(0);
   const [userTotalScore, setUserTotalScore] = useState(0); // Session score tracking
   const [gameResultOutcome, setGameResultOutcome] = useState(null); // Explicit outcome override
+  const [gameStats, setGameStats] = useState(null); // Match stats from Game
 
   // Stable Player ID
   const playerIdRef = useRef(null);
@@ -169,9 +173,32 @@ function App() {
 
   const handleStart = (name, avatar, school, preferredMode = 'human') => {
     // Keep user data from login, just update if needed
-    setUserData(prev => ({ ...prev, name: name || prev.name, avatar: avatar || prev.avatar, school: school || prev.school }));
-    setLobbyMode(preferredMode);
-    setGameState('lobby');
+    const updatedName = name || userData.name;
+    const updatedAvatar = avatar || userData.avatar;
+    setUserData(prev => ({ ...prev, name: updatedName, avatar: updatedAvatar, school: school || prev.school }));
+
+    if (preferredMode === 'human') {
+      // ONLINE: Skip lobby, go straight to matchmaking with unified 'mixed' queue
+      // This ensures ALL online players are in the same pool for faster matching
+      console.log('[Online] Skipping lobby, joining unified matchmaking queue');
+      setGameMode('mixed');
+      setGameState('matchmaking');
+
+      const queueData = {
+        name: updatedName,
+        avatar: updatedAvatar,
+        mode: 'mixed',
+        matchType: 'human',
+        playerId: playerIdRef.current
+      };
+
+      console.log('[Matchmaking] Emitting join_queue:', queueData);
+      getSocket().emit('join_queue', queueData);
+    } else {
+      // BOT: Show lobby for mode selection
+      setLobbyMode(preferredMode);
+      setGameState('lobby');
+    }
   };
 
   const handleShowLeaderboard = () => {
@@ -238,6 +265,7 @@ function App() {
     const myScore = typeof result === 'object' ? result.score : result;
     const opScore = typeof result === 'object' ? result.opScore : opponentScore;
     const outcome = typeof result === 'object' ? result.outcome : null;
+    const stats = typeof result === 'object' ? result.stats : null;
 
     console.log('[App] handleFinish called with:', { myScore, opScore, outcome });
 
@@ -246,6 +274,7 @@ function App() {
     setFinalScore(myScore);
     setOpponentScore(opScore);
     setUserTotalScore(prev => prev + myScore); // Accumulate score
+    setGameStats(stats); // Save match stats for Results screen
 
     if (typeof result === 'object') {
       // Save to server leaderboard
@@ -286,6 +315,33 @@ function App() {
         console.error("Error saving to Firestore:", e);
       }
     }
+    // Award XP based on game result
+    const isWin = outcome === 'opponent_eliminated' || outcome === 'opponent_disconnected' || myScore > opScore;
+    const xpEarned = Math.round(myScore * (isWin ? 2 : 1));
+    if (xpEarned > 0) {
+      const currentXp = parseInt(localStorage.getItem('astromath_xp') || '0');
+      localStorage.setItem('astromath_xp', (currentXp + xpEarned).toString());
+      console.log(`[XP] Earned ${xpEarned} XP (${isWin ? 'WIN' : 'LOSS'}). Total: ${currentXp + xpEarned}`);
+    }
+
+    // Update daily quest progress
+    updateQuestProgress({
+      correctCount: stats?.correctCount || 0,
+      bestStreak: stats?.bestStreak || 0,
+      fastAnswers: stats?.fastAnswers || 0,
+      isWin
+    });
+
+    // Update lifetime stats for profile
+    updateLifetimeStats({
+      correctCount: stats?.correctCount || 0,
+      wrongCount: stats?.wrongCount || 0,
+      bestStreak: stats?.bestStreak || 0,
+      bossDefeated: stats?.bossDefeated || 0,
+      fastAnswers: stats?.fastAnswers || 0,
+      xpEarned: xpEarned,
+      isWin
+    });
 
     if (gameData && gameData.isTournamentMatch) {
       setGameState('tournament');
@@ -308,7 +364,12 @@ function App() {
     console.log("App: Login successful", user);
     setUserData(user);
     setIsAuthenticated(true);
-    setGameState('menu');
+    // Show onboarding for first-time users
+    if (needsOnboarding()) {
+      setGameState('onboarding');
+    } else {
+      setGameState('menu');
+    }
   };
 
   const handleRestart = () => {
@@ -367,6 +428,7 @@ function App() {
     <div className="app-container">
       {gameState === 'welcome' && <Welcome onStart={handleEnterGame} />}
       {gameState === 'login' && <Login onLoginSuccess={handleLoginSuccess} />}
+      {gameState === 'onboarding' && <Onboarding onFinish={() => setGameState('menu')} />}
       {gameState === 'menu' && <Menu userData={userData} onStart={handleStart} onShowLeaderboard={handleShowLeaderboard} onShowTournament={handleShowTournament} onShowPrivateRoom={handleShowPrivateRoom} totalScore={userTotalScore} onLogout={handleLogout} />}
 
       {gameState === 'private_room' && (
@@ -425,11 +487,18 @@ function App() {
           roomId={gameData.roomId}
           playerId={gameData.isTournamentMatch || gameData.isPrivateRoom ? userData.uid : playerIdRef.current}
           myName={userData.name}
+          myAvatar={userData.avatar}
           myCountry={Object.values(gameData.players).find(p => p.name === userData.name)?.country}
           onFinish={handleFinish}
           onQuit={() => {
             getSocket().emit('leave_game', { roomId: gameData.roomId });
-            setGameState('menu');
+            // Don't navigate away immediately - let the game_forfeit_loss
+            // event from server trigger the results screen via handleFinish.
+            // But as a fallback, if no event received in 2s, go to menu
+            setTimeout(() => {
+              // Only force menu if we're still in playing state (no forfeit event received)
+              setGameState(prev => prev === 'playing' ? 'menu' : prev);
+            }, 2000);
           }}
           startTime={gameData.startTime}
           duration={gameData.duration || 90}
@@ -450,6 +519,7 @@ function App() {
           }}
           outcomeOverride={gameResultOutcome}
           isTournament={gameData?.isTournamentMatch}
+          stats={gameStats}
         />
       )}
     </div>

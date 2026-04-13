@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Matematik Uzay Yarışı</string>
-    <string name="title_activity_main">Matematik Uzay Yarışı</string>
+    <string name="app_name">Astromath</string>
+    <string name="title_activity_main">Astromath</string>
     <string name="package_name">com.yazgames.mathrace</string>
     <string name="custom_url_scheme">com.yazgames.mathrace</string>
 </resources>

@@ -662,6 +662,11 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Quick Emoji relay
+    socket.on('send_emoji', ({ roomId, emoji }) => {
+        socket.to(roomId).emit('receive_emoji', { emoji });
+    });
+
     const handleDisconnectOrLeave = (sock) => {
         // Remove from matchmaking queues
         for (const mode in queues) {
@@ -671,22 +676,26 @@ io.on('connection', (socket) => {
         // Find active games where this user was a player
         Object.keys(games).forEach(roomId => {
             const game = games[roomId];
-            const playerIndex = game.players.findIndex(p => p.socketId === sock.id || p.id === sock.id);
 
-            if (playerIndex !== -1) {
+            // Normalize players to array (private rooms use object, matchmaking uses array)
+            const playersArray = Array.isArray(game.players)
+                ? game.players
+                : Object.values(game.players);
+
+            const leavingPlayer = playersArray.find(p => p.socketId === sock.id || p.id === sock.id);
+
+            if (leavingPlayer) {
                 console.log(`[GameTerminated] Player ${sock.id} left active game ${roomId}`);
 
                 // Identify remaining player (winner)
-                const opponent = game.players.find(p => p.socketId !== sock.id && p.id !== sock.id);
+                const opponent = playersArray.find(p => p.socketId !== sock.id && p.id !== sock.id);
 
                 if (opponent) {
-                    // Get disconnected player
-                    const disconnectedPlayer = game.players[playerIndex];
-                    const disconnectedPlayerId = disconnectedPlayer.playerId || disconnectedPlayer.id;
+                    const disconnectedPlayerId = leavingPlayer.playerId || leavingPlayer.id;
                     const opponentPlayerId = opponent.playerId || opponent.id;
 
                     // Calculate scores: winner gets max(50, current_score), loser gets 0
-                    const winnerCurrentScore = game.scores[opponentPlayerId] || 0;
+                    const winnerCurrentScore = (game.scores && (game.scores[opponentPlayerId] || game.scores[opponent.id])) || 0;
                     const winnerFinalScore = Math.max(50, winnerCurrentScore);
 
                     console.log(`[GameTerminated] Winner: ${opponentPlayerId} (${winnerFinalScore} pts), Loser: ${disconnectedPlayerId} (0 pts)`);
@@ -700,6 +709,7 @@ io.on('connection', (socket) => {
                                 opponentScore: 0,
                                 outcome: 'opponent_disconnected'
                             });
+                            console.log(`[GameTerminated] Sent game_forfeit_win to ${opponent.socketId}`);
                         }
                     }
 
@@ -709,6 +719,7 @@ io.on('connection', (socket) => {
                         opponentScore: winnerFinalScore,
                         outcome: 'you_left'
                     });
+                    console.log(`[GameTerminated] Sent game_forfeit_loss to ${sock.id}`);
 
                     // If tournament, handle progression
                     if (game.isTournamentMatch) {
@@ -738,48 +749,8 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log(`[Disconnect] Client ${socket.id} disconnected.`);
-
-        // Remove from matchmaking queues
-        for (const mode in queues) {
-            queues[mode] = queues[mode].filter(p => p.socket.id !== socket.id);
-        }
-
-        // Find active games where this user was a player
-        Object.keys(games).forEach(roomId => {
-            const game = games[roomId];
-            const playerIndex = game.players.findIndex(p => p.socketId === socket.id || p.id === socket.id);
-
-            if (playerIndex !== -1) {
-                console.log(`[Disconnect] Player ${socket.id} left active game ${roomId}`);
-
-                // Identify remaining player (winner)
-                const opponent = game.players.find(p => p.socketId !== socket.id && p.id !== socket.id);
-
-                if (opponent) {
-                    // Notify opponent that they won because other disconnected
-                    // Use playerId (stable ID) for winnerId
-                    io.to(roomId).emit('opponent_disconnected', {
-                        winnerId: opponent.playerId || opponent.id
-                    });
-
-                    // If tournament, handle progression
-                    if (game.isTournamentMatch) {
-                        handleTournamentMatchEnd(game, opponent.playerId || opponent.id);
-                    }
-                }
-
-                // Cleanup game
-                delete games[roomId];
-            }
-        });
-
-        // Handle tournament cleanup if player was in a waiting tournament
-        Object.keys(tournaments).forEach(tournamentId => {
-            const tournament = tournaments[tournamentId];
-            if (tournament.status === 'waiting') {
-                // ... (existing logic)
-            }
-        });
+        // Reuse the same logic as leave_game
+        handleDisconnectOrLeave(socket);
     });
 
     const fs = require('fs');

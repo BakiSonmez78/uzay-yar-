@@ -2,10 +2,14 @@ import React, { useState } from 'react';
 import { getAuth, signInWithPopup, signInWithCredential, GoogleAuthProvider, signInAnonymously } from 'firebase/auth';
 import { Capacitor } from '@capacitor/core';
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
+import { ANIMAL_AVATARS } from './Profile';
+import astromathLogo from '../assets/astromath_logo.jpg';
+import { t, getLang, toggleLang } from '../utils/i18n';
 
 export default function Login({ onLoginSuccess }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [lang, setLangState] = useState(getLang());
 
     const auth = getAuth();
     const isNative = Capacitor.isNativePlatform();
@@ -15,13 +19,10 @@ export default function Login({ onLoginSuccess }) {
         setError('');
         try {
             if (isNative) {
-                // Mobile: Use Capacitor Firebase Authentication
                 console.log('[Login] Using Capacitor Firebase Authentication for mobile');
-
                 const result = await FirebaseAuthentication.signInWithGoogle();
                 console.log('[Login] Capacitor sign-in result:', result);
 
-                // Get credential and sign in to Firebase
                 const credential = GoogleAuthProvider.credential(result.credential?.idToken);
                 const userCredential = await signInWithCredential(auth, credential);
                 const user = userCredential.user;
@@ -29,18 +30,15 @@ export default function Login({ onLoginSuccess }) {
                 console.log('[Login] Sign-in successful:', user.email);
                 onLoginSuccess({
                     name: user.displayName || 'Google User',
-                    avatar: '👤',
+                    avatar: localStorage.getItem('selectedAvatar') || 'cat',
                     email: user.email,
                     uid: user.uid,
                     isGuest: false
                 });
             } else {
-                // Web: Use popup
                 console.log('[Login] Using signInWithPopup for web');
                 const provider = new GoogleAuthProvider();
-                provider.setCustomParameters({
-                    prompt: 'select_account'
-                });
+                provider.setCustomParameters({ prompt: 'select_account' });
 
                 const result = await signInWithPopup(auth, provider);
                 const user = result.user;
@@ -48,7 +46,7 @@ export default function Login({ onLoginSuccess }) {
                 console.log('[Login] Sign-in successful:', user.email);
                 onLoginSuccess({
                     name: user.displayName || 'Google User',
-                    avatar: '👤',
+                    avatar: localStorage.getItem('selectedAvatar') || 'cat',
                     email: user.email,
                     uid: user.uid,
                     isGuest: false
@@ -59,7 +57,6 @@ export default function Login({ onLoginSuccess }) {
             console.error('[Login] Error code:', err.code);
             console.error('[Login] Error message:', err.message);
 
-            // More specific error messages
             if (err.code === 'auth/popup-closed-by-user') {
                 setError('Giriş penceresi kapatıldı. Lütfen tekrar deneyin.');
             } else if (err.code === 'auth/popup-blocked') {
@@ -80,7 +77,6 @@ export default function Login({ onLoginSuccess }) {
             const result = await signInAnonymously(auth);
             const user = result.user;
 
-            // Generate unique guest number using timestamp + uid
             const timestamp = Date.now();
             const combined = user.uid + timestamp.toString();
 
@@ -90,12 +86,12 @@ export default function Login({ onLoginSuccess }) {
                 hash = hash & hash;
             }
             const guestNumber = Math.abs(hash) % 10000;
-            const avatars = ['🚀', '🌟', '⚡', '🎯', '🏆', '💫', '🔥', '⭐'];
+            const randomAnimal = ANIMAL_AVATARS[Math.abs(hash) % ANIMAL_AVATARS.length];
 
             onLoginSuccess({
                 name: `Guest #${guestNumber}`,
-                avatar: avatars[Math.abs(hash) % avatars.length],
-                uid: user.uid + '_' + timestamp, // Make UID unique per session
+                avatar: randomAnimal.id,
+                uid: user.uid + '_' + timestamp,
                 isGuest: true
             });
         } catch (err) {
@@ -112,13 +108,28 @@ export default function Login({ onLoginSuccess }) {
             textAlign: 'center',
             padding: '3rem'
         }}>
-            <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>🚀</h1>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Astromath</h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.8rem' }}>
-                Versiyon: 1.0.5
+            <img src={astromathLogo} alt="Astromath" style={{
+                width: '120px', height: '120px', borderRadius: '24px',
+                marginBottom: '1rem', boxShadow: '0 8px 30px rgba(59,130,246,0.3)'
+            }} />
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{t('login_title')}</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.8rem' }}>
+                {t('login_version')}
             </p>
+
+            {/* Language Toggle - centered pill */}
+            <button onClick={() => { toggleLang(); setLangState(getLang() === 'tr' ? 'en' : 'tr'); }} style={{
+                background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: '20px', padding: '6px 18px', color: 'rgba(255,255,255,0.7)',
+                fontSize: '0.8rem', fontWeight: '600', cursor: 'pointer',
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                marginBottom: '1.5rem', transition: 'all 0.2s'
+            }}>
+                {lang === 'tr' ? '🇬🇧 English' : '🇹🇷 Türkçe'}
+            </button>
+
             <p style={{ color: 'var(--text-secondary)', marginBottom: '3rem' }}>
-                Giriş yaparak maceraya başla!
+                {t('login_subtitle')}
             </p>
 
             {error && (
@@ -151,7 +162,7 @@ export default function Login({ onLoginSuccess }) {
                     }}
                 >
                     <span style={{ fontSize: '1.5rem' }}>🔐</span>
-                    Google ile Giriş Yap
+                    {t('login_google')}
                 </button>
 
                 <button
@@ -169,13 +180,13 @@ export default function Login({ onLoginSuccess }) {
                     }}
                 >
                     <span style={{ fontSize: '1.5rem' }}>👤</span>
-                    Misafir Olarak Devam Et
+                    {t('login_guest')}
                 </button>
             </div>
 
             {loading && (
                 <div style={{ marginTop: '2rem', color: 'var(--text-secondary)' }}>
-                    Giriş yapılıyor...
+                    {t('login_loading')}
                 </div>
             )}
 
@@ -184,8 +195,10 @@ export default function Login({ onLoginSuccess }) {
                 fontSize: '0.9rem',
                 color: 'var(--text-secondary)'
             }}>
-                Google ile giriş yaparak skorlarınız kaydedilir ve liderlik tablosunda görünürsünüz.
+                {t('login_info')}
             </p>
+
+
         </div>
     );
 }
